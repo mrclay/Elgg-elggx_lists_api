@@ -13,25 +13,24 @@ if (!$entity) {
 	forward(REFERER);
 }
 
-$coll = elgg_create_collection($entity, $name);
-if (!$coll || !$coll->canEdit()) {
-	register_error(elgg_echo("collection:add:cannot_create_or_edit"));
-	forward(REFERER);
-}
-
 if (!elgg_entity_exists($item_guid)) {
 	register_error(elgg_echo("collection:add:item_nonexistant"));
 	forward(REFERER);
 }
 
-$accessor = $coll->getAccessor();
+$coll = elggx_get_collection($entity, $name);
 
-if ($accessor->hasAnyOf($item_guid)) {
+if (!$coll->can('add_item', array('item_guid' => $item_guid))) {
+	register_error(elgg_echo("collection:not_permitted"));
+	forward(REFERER);
+}
+
+if ($coll->hasAnyOf($item_guid)) {
 	system_message(elgg_echo("collection:add:already_in_collection"));
 	forward(REFERER);
 }
 
-$accessor->push($item_guid);
+$coll->push($item_guid);
 
 system_message(elgg_echo("collection:add:item_added"));
 forward(REFERER);

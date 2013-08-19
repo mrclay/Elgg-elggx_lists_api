@@ -23,20 +23,19 @@ if (!$entity) {
 	forward(REFERER);
 }
 
-$coll = elgg_get_collection($entity, $name);
-if (!$coll) {
-	register_error(elgg_echo("collection:cant_see_collection"));
+$coll = elggx_get_collection($entity, $name);
+
+$has_permission = $coll->can('rearrange_items', array(
+	'items_before' => $items_before,
+	'items_after' => $items_after,
+));
+
+if (!$has_permission) {
+	register_error(elgg_echo("collection:not_permitted"));
 	forward(REFERER);
 }
 
-if (!$coll->canEdit()) {
-	register_error(elgg_echo("collection:cant_edit"));
-	forward(REFERER);
-}
-
-$accessor = $coll->getAccessor();
-
-if ($accessor->rearrange($items_before, $items_after)) {
+if ($coll->rearrange($items_before, $items_after)) {
 	system_message(elgg_echo("collection:rearrange:success"));
 	forward(REFERER);
 }

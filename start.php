@@ -1,102 +1,124 @@
 <?php
 
-if (function_exists('elgg_create_collection')) {
-	// have native support
-	return;
+if (!function_exists('elgg_get_version')) {
+	require_once __DIR__ . '/start-19-autoloader.php';
+}
+
+/**
+ * Create an API for a named collection on an entity.
+ *
+ * @param ElggEntity|int $entity
+ * @param string         $name
+ *
+ * @return Elggx_Collections_Collection
+ */
+function elggx_get_collection($entity, $name = '') {
+	if ($entity instanceof ElggEntity) {
+		$entity = $entity->guid;
+	}
+	return new Elggx_Collections_Collection($entity, $name);
+}
+
+/**
+ * Get all collections containing an entity
+ *
+ * @param ElggEntity|int $entity
+ * @param array $options Array in format:
+ *
+ * 	limit => null (50)|INT SQL limit clause (0 means no limit)
+ *
+ * 	offset => null (0)|INT SQL offset clause
+ *
+ * 	count => true|false return a count instead of entities
+ *
+ * @return Elggx_Collections_Collection[]|int
+ */
+function elggx_get_containing_collections($entity, array $options = array()) {
+	if ($entity instanceof ElggEntity) {
+		$entity = $entity->guid;
+	}
+
+	$entity = (int)$entity;
+
+	$relationship_prefix = Elggx_Collections_Collection::RELATIONSHIP_PREFIX;
+	$len_relationship_prefix = strlen($relationship_prefix);
+
+	$relationship_prefix_escaped = "'" . sanitize_string($relationship_prefix) .  "'";
+
+	$options = array_merge(array(
+		'limit' => 50,
+		'offset' => 0,
+		'count' => false,
+	), $options);
+
+	if ($options['count']) {
+		$select_values = "COUNT(*) AS cnt";
+		$order_by_expression = "";
+		$limit_expression = "";
+	} else {
+		$select_values = "SUBSTRING({KEY}, 1 + $len_relationship_prefix) AS coll_name, {ENTITY_GUID} AS coll_entity_guid";
+		$order_by_expression = "ORDER BY {TIME} DESC, {KEY}";
+
+		if ($options['limit']) {
+			$limit = sanitise_int($options['limit'], false);
+			$offset = sanitise_int($options['offset'], false);
+			$limit_expression = "LIMIT $offset, $limit";
+		}
+	}
+
+	$sql = "
+		SELECT $select_values
+		FROM {TABLE}
+		WHERE {ITEM} = $entity
+		  AND LEFT({KEY}, $len_relationship_prefix) = $relationship_prefix_escaped
+		$order_by_expression
+		$limit_expression
+	";
+
+	$sql = strtr($sql, array(
+		'{TABLE}' => elgg_get_config('dbprefix') . Elggx_Collections_Collection::TABLE_UNPREFIXED,
+		'{PRIORITY}' => Elggx_Collections_Collection::COL_PRIORITY,
+		'{ITEM}' => Elggx_Collections_Collection::COL_ITEM,
+		'{KEY}' => Elggx_Collections_Collection::COL_KEY,
+		'{TIME}' => Elggx_Collections_Collection::COL_TIME,
+		'{ENTITY_GUID}' => Elggx_Collections_Collection::COL_ENTITY_GUID,
+	));
+
+	if ($options['count']) {
+		$row = get_data_row($sql);
+		return $row ? $row->cnt : 0;
+	} else {
+		$colls = array();
+		foreach ((array)get_data($sql) as $row) {
+			$colls[] = new Elggx_Collections_Collection($row->coll_entity_guid, $row->coll_name);
+		}
+		return $colls;
+	}
+}
+
+/**
+ * Runs unit tests for collections and query modifiers
+ *
+ * @param string $hook   unit_test
+ * @param string $type   system
+ * @param mixed  $value  Array of tests
+ * @param mixed  $params Params
+ *
+ * @return array
+ * @access private
+ */
+function _elggx_collections_test($hook, $type, $value, $params) {
+	$value[] = __DIR__ . '/tests/ElggxCollectionsTest.php';
+	return $value;
+}
+
+/**
+ * Entities init function; establishes the default entity page handler
+ *
+ * @access private
+ */
+function _elggx_collections_init() {
+	elgg_register_plugin_hook_handler('unit_test', 'system', '_elggx_collections_test');
 }
 
 elgg_register_event_handler('init', 'system', '_elggx_collections_init');
-
-function _elggx_collections_init() {
-	$actions_dir = dirname(__FILE__) . "/actions/collections";
-	$actions = array(
-		'add_item',
-		'delete_item',
-		'rearrange_items',
-	);
-	foreach ($actions as $action) {
-		elgg_register_action("collections/$action", "$actions_dir/$action.php");
-	}
-}
-
-function _elggx_collections_loader($class) {
-	$class = ltrim($class, '\\');
-	if (0 !== strpos($class, 'Elggx_')) {
-		return;
-	}
-	$file = dirname(__FILE__) . '/classes/' . strtr(ltrim($class, '\\'), '_\\', '//') . '.php';
-	is_readable($file) && (require $file);
-}
-
-if (!class_exists('Elggx_Collection')) {
-	// we're in 1.8, will need autoloader
-	spl_autoload_register('_elggx_collections_loader');
-}
-
-/**
- * @return Elggx_CollectionsService
- */
-function _elggx_collections_service() {
-	static $inst;
-	if (!$inst) {
-		$inst = new Elggx_CollectionsService();
-	}
-	return $inst;
-}
-
-/**
- * Create (or fetch an existing) named collection on an entity. Good for creating a collection
- * on demand for editing.
- *
- * @param ElggEntity $entity
- * @param string $name
- * @return Elggx_Collection|null null if user is not permitted to create
- */
-function elgg_create_collection(ElggEntity $entity, $name = '__default') {
-	return _elggx_collections_service()->create($entity, $name);
-}
-
-/**
- * Get a reference to a collection if it exists, and the current user can see (or can edit it)
- *
- * @param ElggEntity $entity
- * @param string $name
- * @return Elggx_Collection|null
- */
-function elgg_get_collection(ElggEntity $entity, $name = '__default') {
-	return _elggx_collections_service()->fetch($entity, $name);
-}
-
-/**
- * Does this collection exist? This does not imply the current user can access it.
- *
- * @param ElggEntity|int $entity entity or GUID
- * @param string $name
- * @return bool
- */
-function elgg_collection_exists($entity, $name = '__default') {
-	return _elggx_collections_service()->exists($entity, $name);
-}
-
-/**
- * Get a query modifier object to apply a collection to an elgg_get_entities call.
- *
- * <code>
- * $qm = elgg_get_collection_query_modifier($user, 'blog_sticky');
- * $qm->setModel('sticky');
- *
- * elgg_list_entities($qm->getOptions(array(
- *     'type' => 'object',
- *     'subtype' => 'blog',
- *     'owner_guid' => $user->guid,
- * )));
- * </code>
- *
- * @param ElggEntity $entity entity
- * @param string $name
- * @return Elggx_Collection_QueryModifier
- */
-function elgg_get_collection_query_modifier(ElggEntity $entity, $name = '__default') {
-	$coll = _elggx_collections_service()->fetch($entity, $name);
-	return new Elggx_Collection_QueryModifier($coll);
-}

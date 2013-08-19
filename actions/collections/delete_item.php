@@ -13,25 +13,19 @@ if (!$entity) {
 	forward(REFERER);
 }
 
-$coll = elgg_get_collection($entity, $name);
-if (!$coll) {
-	register_error(elgg_echo("collection:cant_see_collection"));
+$coll = elggx_get_collection($entity, $name);
+
+if (!$coll->can('delete_item', array('item_guid' => $item_guid))) {
+	register_error(elgg_echo("collection:not_permitted"));
 	forward(REFERER);
 }
 
-if (!$coll->canEdit()) {
-	register_error(elgg_echo("collection:cant_edit"));
-	forward(REFERER);
-}
-
-$accessor = $coll->getAccessor();
-
-if (!$accessor->hasAnyOf($item_guid)) {
+if (!$coll->hasAnyOf($item_guid)) {
 	system_message(elgg_echo("collection:del:not_in_collection"));
 	forward(REFERER);
 }
 
-$accessor->remove($item_guid);
+$coll->remove($item_guid);
 
 system_message(elgg_echo("collection:del:item_removed"));
 forward(REFERER);

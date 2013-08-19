@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin_manifest xmlns="http://www.elgg.org/plugin_manifest/1.8">
-    <id>elggx_collections_api</id>
-    <name>Collections API</name>
-    <author>Steve Clay</author>
-    <website>http://www.mrclay.org/</website>
-    <version>0.1</version>
-    <description>Elgg Collections API</description>
-    <requires>
-        <type>elgg_release</type>
-        <version>1.8</version>
-    </requires>
+	<name>Elgg Collections API (Experimental)</name>
+	<id>elggx_collections_api</id>
+	<author>Steve Clay</author>
+	<version>0.3</version>
+	<description>Provides API for managing collections of entities (stored as relationships)</description>
+	<category>api</category>
+	<website>http://www.mrclay.org/</website>
+	<requires>
+		<type>elgg_release</type>
+		<version>1.8</version>
+	</requires>
 </plugin_manifest>

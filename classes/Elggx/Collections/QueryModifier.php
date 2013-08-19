@@ -7,11 +7,8 @@
  * in the collection, and ordered chronologically w/r/t when the items were added to the collection.
  *
  * @access private
- *
- * @package    Elgg.Core
- * @subpackage Collections
  */
-class Elggx_Collection_QueryModifier implements Elggx_QueryModifierInterface {
+class Elggx_Collections_QueryModifier implements Elggx_QueryModifierInterface {
 
 	const MODEL_STICKY = 'sticky';
 	const MODEL_FILTER = 'filter';
@@ -19,10 +16,19 @@ class Elggx_Collection_QueryModifier implements Elggx_QueryModifierInterface {
 
 	const DEFAULT_ORDER = 'e.time_created DESC';
 
+	/**
+	 * @var Elggx_Collections_Collection
+	 */
 	protected $collection;
 
+	/**
+	 * @var string
+	 */
 	protected $join_column = 'e.guid';
 
+	/**
+	 * @var int
+	 */
 	static protected $counter = 0;
 
 	/**
@@ -38,7 +44,7 @@ class Elggx_Collection_QueryModifier implements Elggx_QueryModifierInterface {
 	/**
 	 * @var bool should the collection be used such that recent additions are on top?
 	 */
-	public $isReversed = false;
+	public $isReversed = true;
 
 	/**
 	 * @var bool should all the collection items appear at the top?
@@ -46,16 +52,16 @@ class Elggx_Collection_QueryModifier implements Elggx_QueryModifierInterface {
 	public $collectionItemsFirst = true;
 
 	/**
-	 * Constructor
+	 * @param Elggx_Collections_Collection|null $collection
 	 *
-	 * @param Elggx_Collection|null $collection
+	 * @todo decide if supporting a null collection is actually useful
 	 */
-	public function __construct(Elggx_Collection $collection = null) {
+	public function __construct(Elggx_Collections_Collection $collection = null) {
         $this->collection = $collection;
     }
 
     /**
-     * @return Elggx_Collection|null
+     * @return Elggx_Collections_Collection|null
      */
     public function getCollection() {
         return $this->collection;
@@ -80,7 +86,7 @@ class Elggx_Collection_QueryModifier implements Elggx_QueryModifierInterface {
 
 	/**
 	 * @param string $model one of 'sticky', 'filter', 'selector'
-	 * @return Elggx_Collection_QueryModifier
+	 * @return Elggx_Collections_QueryModifier
 	 * @throws InvalidArgumentException
 	 */
 	public function setModel($model) {
@@ -117,6 +123,7 @@ class Elggx_Collection_QueryModifier implements Elggx_QueryModifierInterface {
 				return $options;
 			}
 		} else {
+			// @todo decide if supporting a null collection is actually useful
 			if (!$this->includeCollection || !$this->collection) {
 				// return none
 				$options['wheres'][] = "(1 = 2)";
@@ -131,11 +138,11 @@ class Elggx_Collection_QueryModifier implements Elggx_QueryModifierInterface {
             $options['order_by'] = self::DEFAULT_ORDER;
         }
 
-		$table           = elgg_get_config('dbprefix') . Elggx_Collection::TABLE_UNPREFIXED;
-		$col_item        = Elggx_Collection::COL_ITEM;
-		$col_entity_guid = Elggx_Collection::COL_ENTITY_GUID;
-		$col_key         = Elggx_Collection::COL_KEY;
-		$col_priority    = Elggx_Collection::COL_PRIORITY;
+		$table           = elgg_get_config('dbprefix') . Elggx_Collections_Collection::TABLE_UNPREFIXED;
+		$col_item        = Elggx_Collections_Collection::COL_ITEM;
+		$col_entity_guid = Elggx_Collections_Collection::COL_ENTITY_GUID;
+		$col_key         = Elggx_Collections_Collection::COL_KEY;
+		$col_priority    = Elggx_Collections_Collection::COL_PRIORITY;
 
         $join = "JOIN $table $tableAlias "
               . "ON ({$this->join_column} = {$tableAlias}.{$col_item} "
