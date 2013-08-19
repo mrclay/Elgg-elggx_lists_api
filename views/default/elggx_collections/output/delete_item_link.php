@@ -10,7 +10,7 @@ $vars['href'] = "action/collections/delete_item?" . http_build_query(array(
 ));
 
 if (empty($vars['text'])) {
-	$vars['text'] = elgg_echo('collection:link:delete_item');
+	$vars['text'] = elgg_echo('elggx_collections:link:delete_item');
 }
 
 $vars['is_action'] = true;

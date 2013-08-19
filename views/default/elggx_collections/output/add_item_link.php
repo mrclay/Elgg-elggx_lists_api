@@ -10,7 +10,7 @@ $vars['href'] = "action/collections/add_item?" . http_build_query(array(
 ));
 
 if (empty($vars['text'])) {
-	$vars['text'] = elgg_echo('collection:link:add_item');
+	$vars['text'] = elgg_echo('elggx_collections:link:add_item');
 }
 
 $vars['is_action'] = true;

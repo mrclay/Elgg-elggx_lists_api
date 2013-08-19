@@ -10,7 +10,7 @@ $items_after = get_input('guids_after', array(), false);
 
 // sanity check input
 if ($entity_guid < 1 || !is_string($name) || !$name || !is_array($items_before) || !is_array($items_after)) {
-	register_error(elgg_echo("collection:rearrange:invalid_input"));
+	register_error(elgg_echo("elggx_collections:rearrange:invalid_input"));
 	forward(REFERER);
 }
 $items_before = array_map('intval', $items_before);
@@ -19,7 +19,7 @@ $items_after = array_map('intval', $items_after);
 
 $entity = get_entity($entity_guid);
 if (!$entity) {
-	register_error(elgg_echo("collection:could_not_load_container_entity"));
+	register_error(elgg_echo("elggx_collections:could_not_load_container_entity"));
 	forward(REFERER);
 }
 
@@ -31,14 +31,14 @@ $has_permission = $coll->can('rearrange_items', array(
 ));
 
 if (!$has_permission) {
-	register_error(elgg_echo("collection:not_permitted"));
+	register_error(elgg_echo("elggx_collections:not_permitted"));
 	forward(REFERER);
 }
 
 if ($coll->rearrange($items_before, $items_after)) {
-	system_message(elgg_echo("collection:rearrange:success"));
+	system_message(elgg_echo("elggx_collections:rearrange:success"));
 	forward(REFERER);
 }
 
-register_error(elgg_echo("collection:rearrange:failed"));
+register_error(elgg_echo("elggx_collections:rearrange:failed"));
 forward(REFERER);

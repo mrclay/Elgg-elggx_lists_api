@@ -9,23 +9,23 @@ $item_guid = (int) get_input('item_guid', 0, false);
 
 $entity = get_entity($entity_guid);
 if (!$entity) {
-	register_error(elgg_echo("collection:could_not_load_container_entity"));
+	register_error(elgg_echo("elggx_collections:could_not_load_container_entity"));
 	forward(REFERER);
 }
 
 $coll = elggx_get_collection($entity, $name);
 
 if (!$coll->can('delete_item', array('item_guid' => $item_guid))) {
-	register_error(elgg_echo("collection:not_permitted"));
+	register_error(elgg_echo("elggx_collections:not_permitted"));
 	forward(REFERER);
 }
 
 if (!$coll->hasAnyOf($item_guid)) {
-	system_message(elgg_echo("collection:del:not_in_collection"));
+	system_message(elgg_echo("elggx_collections:del:not_in_collection"));
 	forward(REFERER);
 }
 
 $coll->remove($item_guid);
 
-system_message(elgg_echo("collection:del:item_removed"));
+system_message(elgg_echo("elggx_collections:del:item_removed"));
 forward(REFERER);

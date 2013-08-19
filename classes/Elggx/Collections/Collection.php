@@ -99,7 +99,7 @@ class Elggx_Collections_Collection {
 	public function can($capability, array $hook_params = array()) {
 		$hook_params['collection'] = $this;
 		$hook_params['user'] = elgg_get_logged_in_user_entity();
-		return (bool)elgg_trigger_plugin_hook('xcollection:can', $capability, $hook_params, false);
+		return (bool)elgg_trigger_plugin_hook('elggx_collections:can', $capability, $hook_params, false);
 	}
 
 	/**
