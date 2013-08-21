@@ -27,32 +27,28 @@ class Elggx_Collections_Item {
 	/**
 	 * @return int
 	 */
-	public function getValue()
-	{
+	public function getValue() {
 		return $this->value;
 	}
 
 	/**
 	 * @return int|null
 	 */
-	public function getPriority()
-	{
+	public function getPriority() {
 		return $this->priority;
 	}
 
 	/**
 	 * @return int
 	 */
-	public function getTime()
-	{
+	public function getTime() {
 		return $this->time;
 	}
 
 	/**
 	 * @param int $priority
 	 */
-	public function setPriority($priority)
-	{
+	public function setPriority($priority) {
 		$this->priority = $priority;
 	}
 }

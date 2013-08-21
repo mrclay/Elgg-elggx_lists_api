@@ -3,13 +3,7 @@
 /**
  * A named and ordered collection of entities handy for modifying elgg_get_entities() queries.
  *
- * A collection can be thought of as metadata that stores a list of entities in a way that's optimized
- * for SQL JOIN operations. For now, a central collections service can be used to fetch or create collection
- * objects, but mostly plugin devs won't need to interact with these unless they want to alter collection
- * items.
- *
- * @note Use elgg_get_collection() to access collections, and the getAccessor() method to get
- *       an object for accessing/editing the items directly.
+ * @note Use elggx_get_collection() to access collections
  *
  * @access private
  */
@@ -45,8 +39,7 @@ class Elggx_Collections_Collection {
 	 * @access private
 	 * @throws InvalidArgumentException
 	 */
-	public function __construct($entity_guid, $name)
-	{
+	public function __construct($entity_guid, $name) {
 		$this->entity_guid = (int)$entity_guid;
 		$this->name = $name;
 		$this->relationship_key = self::createRelationshipKey($name);
@@ -55,6 +48,7 @@ class Elggx_Collections_Collection {
 
 	/**
 	 * @param string $name
+	 *
 	 * @return string
 	 * @throws InvalidArgumentException
 	 *
@@ -135,6 +129,7 @@ class Elggx_Collections_Collection {
 	 * Add item(s) to the end of the collection. Already existing items are not added/moved.
 	 *
 	 * @param array|int|ElggEntity $new_items
+	 *
 	 * @return bool success
 	 */
 	public function push($new_items) {
@@ -171,6 +166,7 @@ class Elggx_Collections_Collection {
 	 *
 	 * @param int[] $items_before
 	 * @param int[] $items_after
+	 *
 	 * @return bool
 	 */
 	public function rearrange(array $items_before, array $items_after) {
@@ -220,6 +216,7 @@ class Elggx_Collections_Collection {
 	 *
 	 * @param int|ElggEntity $moving_item
 	 * @param int|ElggEntity $after_item
+	 *
 	 * @return bool success
 	 */
 	public function moveAfter($moving_item, $after_item) {
@@ -267,6 +264,7 @@ class Elggx_Collections_Collection {
 	 *
 	 * @param int|ElggEntity $moving_item
 	 * @param int|ElggEntity $before_item
+	 *
 	 * @return bool success
 	 */
 	public function moveBefore($moving_item, $before_item) {
@@ -325,6 +323,7 @@ class Elggx_Collections_Collection {
 	 * Remove item(s) from the collection
 	 *
 	 * @param array|int|ElggEntity|Elggx_Collections_Item $items
+	 *
 	 * @return int|bool
 	 */
 	public function remove($items) {
@@ -342,6 +341,7 @@ class Elggx_Collections_Collection {
 	 * Remove item(s) from the beginning.
 	 *
 	 * @param int $num
+	 *
 	 * @return int|bool num rows removed
 	 */
 	public function removeFromBeginning($num = 1) {
@@ -352,6 +352,7 @@ class Elggx_Collections_Collection {
 	 * Remove item(s) from the end.
 	 *
 	 * @param int $num
+	 *
 	 * @return int|bool num rows removed
 	 */
 	public function removeFromEnd($num = 1) {
@@ -362,16 +363,18 @@ class Elggx_Collections_Collection {
 	 * Do any of the provided items appear in the collection?
 	 *
 	 * @param array|int|ElggEntity|Elggx_Collections_Item $items
+	 *
 	 * @return bool
 	 */
 	public function hasAnyOf($items) {
-		return (bool) $this->intersect($items);
+		return (bool)$this->intersect($items);
 	}
 
 	/**
 	 * Do all of the provided items appear in the collection?
 	 *
 	 * @param array|int|ElggEntity|Elggx_Collections_Item $items
+	 *
 	 * @return bool
 	 */
 	public function hasAllOf($items) {
@@ -385,6 +388,7 @@ class Elggx_Collections_Collection {
 	 * Get the 0-indexed position of the item within the collection
 	 *
 	 * @param int|ElggEntity $item
+	 *
 	 * @return bool|int 0-indexed position of item in collection or false if not found
 	 */
 	public function indexOf($item) {
@@ -408,6 +412,7 @@ class Elggx_Collections_Collection {
 	 *
 	 * @param int      $offset
 	 * @param int|null $length
+	 *
 	 * @return array
 	 */
 	public function slice($offset = 0, $length = null) {
@@ -429,7 +434,7 @@ class Elggx_Collections_Collection {
 				return $this->fetchValues(true, '', 0, $length);
 			} else {
 				// length < 0
-				return array_reverse($this->fetchValues(false, '', - $length));
+				return array_reverse($this->fetchValues(false, '', -$length));
 			}
 		} elseif ($offset > 0) {
 			if ($length === null) {
@@ -453,7 +458,7 @@ class Elggx_Collections_Collection {
 		} else {
 			// offset < 0
 			if ($length === null) {
-				return array_reverse($this->fetchValues(false, '', 0, - $offset));
+				return array_reverse($this->fetchValues(false, '', 0, -$offset));
 			} elseif ($length > 0) {
 				$sql_offset = -$offset;
 				$rows = get_data($this->preprocessSql("
@@ -498,6 +503,7 @@ class Elggx_Collections_Collection {
 	 * Insert Elggx_Collections_Item objects into the collection
 	 *
 	 * @param Elggx_Collections_Item[] $items
+	 *
 	 * @return bool
 	 */
 	protected function insertItems(array $items) {
@@ -537,6 +543,7 @@ class Elggx_Collections_Collection {
 	 * appear in the collection)
 	 *
 	 * @param array|int|ElggEntity $items
+	 *
 	 * @return Elggx_Collections_Item[]
 	 *
 	 * @access private
@@ -553,10 +560,11 @@ class Elggx_Collections_Collection {
 	 * Get the id columns values of the given items
 	 *
 	 * @param int|ElggEntity|array $items one or more items
+	 *
 	 * @return int|bool|array for each item given, the ID will be returned, or false if the item is not found.
 	 *                        If the given item was an array, an array will be returned with a key for each item
 	 *
-	 * @access private
+	 * @access                private
 	 */
 	protected function getPriorities($items) {
 		$is_array = is_array($items);
@@ -585,12 +593,16 @@ class Elggx_Collections_Collection {
 	 * @param int      $offset
 	 * @param int|null $limit
 	 * @param bool     $count_only if true, return will be number of rows
+	 *
 	 * @return Elggx_Collections_Item[]|int|bool
 	 *
 	 * @access private
 	 */
-	protected function fetchItems($ascending = true, $where = '', $offset = 0,
-								  $limit = null, $count_only = false) {
+	protected function fetchItems($ascending = true,
+								  $where = '',
+								  $offset = 0,
+								  $limit = null,
+								  $count_only = false) {
 		// Note1: This is the largest supported value for MySQL's LIMIT (2^64-1) which must be used
 		// because MySQL doesn't support offset without limit: http://stackoverflow.com/a/271650/3779
 		$mysql_no_limit = "18446744073709551615";
@@ -650,14 +662,18 @@ class Elggx_Collections_Collection {
 	 * @param int      $offset
 	 * @param int|null $limit
 	 * @param bool     $count_only if true, return will be number of rows
+	 *
 	 * @return array|int|bool keys will be 0-indexed
 	 *
-	 * @see fetchItems()
+	 * @see    fetchItems()
 	 *
 	 * @access private
 	 */
-	protected function fetchValues($ascending = true, $where = '', $offset = 0,
-								   $limit = null, $count_only = false) {
+	protected function fetchValues($ascending = true,
+								   $where = '',
+								   $offset = 0,
+								   $limit = null,
+								   $count_only = false) {
 		$items = $this->fetchItems($ascending, $where, $offset, $limit, $count_only);
 		if (is_array($items)) {
 			$new_items = array();
@@ -677,6 +693,7 @@ class Elggx_Collections_Collection {
 	 *
 	 * @param int  $num
 	 * @param bool $from_beginning remove from the beginning of the collection?
+	 *
 	 * @return int|bool num rows removed
 	 *
 	 * @access private
@@ -696,6 +713,7 @@ class Elggx_Collections_Collection {
 	 * Cast a single value/entity to an int (or an array of values to an array of ints)
 	 *
 	 * @param mixed|array $i
+	 *
 	 * @return int|array
 	 * @throws InvalidParameterException
 	 *
@@ -729,6 +747,7 @@ class Elggx_Collections_Collection {
 	 * Cast to array without fear of breaking objects
 	 *
 	 * @param mixed
+	 *
 	 * @return array
 	 *
 	 * @access private
@@ -739,6 +758,7 @@ class Elggx_Collections_Collection {
 
 	/**
 	 * @param string $sql
+	 *
 	 * @return string
 	 *
 	 * @access private
@@ -760,6 +780,7 @@ class Elggx_Collections_Collection {
 	 * Get an item by index (can be negative!)
 	 *
 	 * @param int $index
+	 *
 	 * @return int|null
 	 *
 	 * @access private
@@ -773,6 +794,7 @@ class Elggx_Collections_Collection {
 	 * Remove items by priority
 	 *
 	 * @param array $priorities
+	 *
 	 * @return int|bool
 	 *
 	 * @access private

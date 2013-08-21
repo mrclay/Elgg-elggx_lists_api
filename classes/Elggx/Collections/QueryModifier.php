@@ -4,7 +4,7 @@
  * Create a strategy for applying a collection to a query
  *
  * By default the collection is applied as a selector, meaning the query returns only items
- * in the collection, and ordered chronologically w/r/t when the items were added to the collection.
+ * in the collection, and ordered with the latest added on top.
  *
  * @access private
  */
@@ -57,35 +57,36 @@ class Elggx_Collections_QueryModifier implements Elggx_QueryModifierInterface {
 	 * @todo decide if supporting a null collection is actually useful
 	 */
 	public function __construct(Elggx_Collections_Collection $collection = null) {
-        $this->collection = $collection;
-    }
+		$this->collection = $collection;
+	}
 
-    /**
-     * @return Elggx_Collections_Collection|null
-     */
-    public function getCollection() {
-        return $this->collection;
-    }
+	/**
+	 * @return Elggx_Collections_Collection|null
+	 */
+	public function getCollection() {
+		return $this->collection;
+	}
 
-    /**
-     * Reset the collection_items table alias counter (call after each query to optimize
-     * use of the query cache)
-     */
-    static public function resetCounter() {
-        self::$counter = 0;
-    }
+	/**
+	 * Reset the collection_items table alias counter (call after each query to optimize
+	 * use of the query cache)
+	 */
+	static public function resetCounter() {
+		self::$counter = 0;
+	}
 
-    /**
-     * Get the next collection_items table alias
-     * @return int
-     */
-    static public function getTableAlias() {
-        self::$counter++;
-        return "ci" . self::$counter;
-    }
+	/**
+	 * Get the next collection_items table alias
+	 * @return int
+	 */
+	static public function getTableAlias() {
+		self::$counter++;
+		return "ci" . self::$counter;
+	}
 
 	/**
 	 * @param string $model one of 'sticky', 'filter', 'selector'
+	 *
 	 * @return Elggx_Collections_QueryModifier
 	 * @throws InvalidArgumentException
 	 */
@@ -115,10 +116,11 @@ class Elggx_Collections_QueryModifier implements Elggx_QueryModifierInterface {
 
 	/**
 	 * @param array $options
+	 *
 	 * @return array
 	 */
 	public function getOptions(array $options = array()) {
-        if ($this->includeOthers) {
+		if ($this->includeOthers) {
 			if (!$this->collection) {
 				return $options;
 			}
@@ -135,35 +137,35 @@ class Elggx_Collections_QueryModifier implements Elggx_QueryModifierInterface {
 		$key = $this->collection->getRelationshipKey();
 
 		if (empty($options['order_by'])) {
-            $options['order_by'] = self::DEFAULT_ORDER;
-        }
+			$options['order_by'] = self::DEFAULT_ORDER;
+		}
 
-		$table           = elgg_get_config('dbprefix') . Elggx_Collections_Collection::TABLE_UNPREFIXED;
-		$col_item        = Elggx_Collections_Collection::COL_ITEM;
+		$table = elgg_get_config('dbprefix') . Elggx_Collections_Collection::TABLE_UNPREFIXED;
+		$col_item = Elggx_Collections_Collection::COL_ITEM;
 		$col_entity_guid = Elggx_Collections_Collection::COL_ENTITY_GUID;
-		$col_key         = Elggx_Collections_Collection::COL_KEY;
-		$col_priority    = Elggx_Collections_Collection::COL_PRIORITY;
+		$col_key = Elggx_Collections_Collection::COL_KEY;
+		$col_priority = Elggx_Collections_Collection::COL_PRIORITY;
 
-        $join = "JOIN $table $tableAlias "
-              . "ON ({$this->join_column} = {$tableAlias}.{$col_item} "
-			  . "    AND {$tableAlias}.{$col_entity_guid} = $guid "
-			  . "    AND {$tableAlias}.{$col_key} = '$key') ";
-        if ($this->includeOthers) {
-            $join = "LEFT {$join}";
-        }
-        $options['joins'][] = $join;
-        if ($this->includeCollection) {
-            $order = "{$tableAlias}.{$col_priority}";
-            if ($this->collectionItemsFirst != $this->isReversed) {
-                $order = "- $order";
-            }
-            if ($this->collectionItemsFirst) {
-                $order .= " DESC";
-            }
-            $options['order_by'] = "{$order}, {$options['order_by']}";
-        } else {
-            $options['wheres'][] = "({$tableAlias}.{$col_item} IS NULL)";
-        }
-        return $options;
-    }
+		$join = "JOIN $table $tableAlias "
+			. "ON ({$this->join_column} = {$tableAlias}.{$col_item} "
+			. "    AND {$tableAlias}.{$col_entity_guid} = $guid "
+			. "    AND {$tableAlias}.{$col_key} = '$key') ";
+		if ($this->includeOthers) {
+			$join = "LEFT {$join}";
+		}
+		$options['joins'][] = $join;
+		if ($this->includeCollection) {
+			$order = "{$tableAlias}.{$col_priority}";
+			if ($this->collectionItemsFirst != $this->isReversed) {
+				$order = "- $order";
+			}
+			if ($this->collectionItemsFirst) {
+				$order .= " DESC";
+			}
+			$options['order_by'] = "{$order}, {$options['order_by']}";
+		} else {
+			$options['wheres'][] = "({$tableAlias}.{$col_item} IS NULL)";
+		}
+		return $options;
+	}
 }
