@@ -14,10 +14,10 @@ Each collection specifies an entity GUID and a string name. E.g.
 <?php
 
 // A user's favorites collection
-$coll = elggx_get_collection($user, 'favorites');
+$collection = elggx_get_collection($user, 'favorites');
 
 // default collection name is "".
-$coll = elggx_get_collection($entity);
+$collection = elggx_get_collection($entity);
 ```
 
 ### Modifying a collection
@@ -42,7 +42,7 @@ E.g. Applying sticky items to a query:
 <?php
 
 // get a query modifier object set to the sticky model
-$qm = $coll->getQueryModifier('sticky');
+$qm = $collection->getQueryModifier('sticky');
 
 // decorate $options
 $options = $qm->getOptions($options);
@@ -52,7 +52,7 @@ elgg_list_entities($options);
 
 ### Finding collections
 
-`elggx_get_containing_collections($entity, $options)` provides a way to find collections that contain a particular entity.
+`elggx_get_containing_collections($entity, $options)` provides a way to find/count collections that contain a particular entity.
 
 It returns an array of collection objects or an int if `$options['count']` is true. Like `elgg_get_entities`, it supports pagination with `$options['limit']` and `$options['offset']`.
 
