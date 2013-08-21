@@ -8,12 +8,14 @@ This API (it does not directly provide functionality) provides the ability to ma
 
 A collection object (`Elggx_Collections_Collection`) is essentially an API for relating items to an entity (in fact it uses the relationships table under the hood). So all collections *exist*, they're just empty by default.
 
-Each collection is bound to an entity GUID and a string name.
+Each collection specifies an entity GUID and a string name.
+
+E.g.
 
 ```php
 <?php
 
-// a collection bound to a user
+// A user's favorites collection
 $coll = elggx_get_collection($user, 'favorites');
 
 // If useful, each entity has a default collection with name "".
