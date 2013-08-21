@@ -2,15 +2,13 @@
 
 ## Collections API
 
-This API (it does not directly provide functionality) provides the ability to manage ordered collections of entities, and to efficiently use those collections in `elgg_get_entities()` queries. This allows efficient and pagination-compatible implementations of ordered favorites lists, "sticky" entities, hidden items, etc.
+This plugin provides an API (it does not directly provide functionality) for managing ordered sets of entities, and to efficiently use those sets in `elgg_get_entities()` queries. This allows efficient and pagination-compatible implementations of ordered favorites lists, "sticky" entities, hidden items, etc.
 
 ### The basics
 
-A collection object (`Elggx_Collections_Collection`) is essentially an API for relating items to an entity (in fact it uses the relationships table under the hood). So all collections *exist*, they're just empty by default.
+The collection object (`Elggx_Collections_Collection`) is essentially an API for relating items to an entity (in fact it uses the relationships table under the hood), so all collections *exist*, they're just empty by default.
 
-Each collection specifies an entity GUID and a string name.
-
-E.g.
+Each collection specifies an entity GUID and a string name. E.g.
 
 ```php
 <?php
@@ -18,15 +16,15 @@ E.g.
 // A user's favorites collection
 $coll = elggx_get_collection($user, 'favorites');
 
-// If useful, each entity has a default collection with name "".
+// default collection name is "".
 $coll = elggx_get_collection($entity);
 ```
 
 ### Modifying a collection
 
-The collection has several methods designed to manage items similarly to arrays. These methods accept single/arrays of ElggEntities or GUIDs but always return single/arrays of GUIDs.
+The collection has several methods designed to manage items similarly to arrays. These methods accept ElggEntities or GUIDs but always return GUIDs.
 
-Due to the storage model, the API discourages placing new items before others in the collection, but the `rearrange()` method (supported by the rearrange_items action) provides the most efficient way to achieve this.
+Due to the storage model, the API discourages placing new items before others in the collection, but the `rearrange()` method (supported by the `rearrange_items` action) provides the most efficient way to achieve this.
 
 ### Using a collection in queries
 
@@ -54,11 +52,13 @@ elgg_list_entities($options);
 
 ### Finding collections
 
-`elggx_get_containing_collections($entity, $options)` provides a way to find collections that contain a particular entity. It returns an array of collection objects or an int if `$options['count']` is true. Like elgg_get_entities, it supports pagination with `$options['limit']` and `$options['offset']`.
+`elggx_get_containing_collections($entity, $options)` provides a way to find collections that contain a particular entity.
+
+It returns an array of collection objects or an int if `$options['count']` is true. Like `elgg_get_entities`, it supports pagination with `$options['limit']` and `$options['offset']`.
 
 ### Access control
 
-If you need this, tie your collection to an `ElggObject` and use access/`canEdit()` on the object to determine if the user can view/edit the collection. Like relationships, collections have no inherent access control.
+Like relationships, collections have no inherent access control. If you need this, tie your collection to an `ElggObject` and use access control on the object to determine if the user should be able to access/edit the collection.
 
 ### Using the built-in collections actions/views
 
@@ -80,13 +80,13 @@ Also included are views `elggx_collections/output/(add|remove)_item_link` to wri
 
 JavaScript code to support the `rearrange_items` action (based on jQuery UI Sortable) has been copied from a working project, but must be refactored to function. It's located in views/default/js/elggx_collections.js
 
-I hope to offer a view that supports outputting a collection so that it can be reordered. The reordering mechanism should work across pagination boundaries, but obviously there's no way to drag items across pages, so it may be wise to always present the list on one page when it must be sorted.
+I hope to offer a view that supports rendering a sortable collection. The sorting mechanism should work across pagination boundaries, but obviously there's no way to drag across pages, so it may be wise to always present the list on one page when it must be sorted.
 
 The backend reordering mechanism is designed to perform as few queries as possible, but this API will certainly have limitations.
 
 ### Setup
 
-Install this plugin as `path/to/Elgg/mod/elggx_collections_api`
+Install this plugin as `mod/elggx_collections_api`
 
 ### Support
 
