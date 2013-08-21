@@ -2,12 +2,67 @@
 
 ## Collections API
 
-(TODO)
+This API (it does not directly provide functionality) provides the ability to manage ordered collections of entities, and to efficiently use those collections in `elgg_get_entities()` queries. This allows efficient and pagination-compatible implementations of ordered favorites lists, "sticky" entities, hidden items, etc.
 
+### The basics
 
-### Using the built-in collections actions
+A collection object (`Elggx_Collections_Collection`) is essentially an API for relating items to an entity (in fact it uses the relationships table under the hood). So all collections *exist*, they're just empty by default.
 
-To use these, you must specify permissions for collections. You do this by handling the plugin hook "elggx_collections:can". Your handler will be passed the collection, as `$params['collection']`, and the logged in user as `$params['user']`.
+Each collection is bound to an entity GUID and a string name.
+
+```php
+<?php
+
+// a collection bound to a user
+$coll = elggx_get_collection($user, 'favorites');
+
+// If useful, each entity has a default collection with name "".
+$coll = elggx_get_collection($entity);
+```
+
+### Modifying a collection
+
+The collection has several methods designed to manage items similarly to arrays. These methods accept single/arrays of ElggEntities or GUIDs but always return single/arrays of GUIDs.
+
+Due to the storage model, the API discourages placing new items before others in the collection, but the `rearrange()` method (supported by the rearrange_items action) provides the most efficient way to achieve this.
+
+### Using a collection in queries
+
+A query modifier object is designed to decorate the `$options` array passed to `elgg_get_entities()`.
+
+The object gives you a lot of flexibility in applying a collection to your queries, but it comes with three built-in models:
+
+* **selector** (default) : fetch only collection items, with the latest added on top
+* **sticky** : keep collection items at the top of the result set, with the latest collection items on top
+* **filter** : remove collection items from the result set
+
+E.g. Applying sticky items to a query:
+
+```php
+<?php
+
+// get a query modifier object set to the sticky model
+$qm = $coll->getQueryModifier('sticky');
+
+// decorate $options
+$options = $qm->getOptions($options);
+
+elgg_list_entities($options);
+```
+
+### Finding collections
+
+`elggx_get_containing_collections($entity, $options)` provides a way to find collections that contain a particular entity. It returns an array of collection objects or an int if `$options['count']` is true. Like elgg_get_entities, it supports pagination with `$options['limit']` and `$options['offset']`.
+
+### Access control
+
+If you need this, tie your collection to an `ElggObject` and use access/`canEdit()` on the object to determine if the user can view/edit the collection. Like relationships, collections have no inherent access control.
+
+### Using the built-in collections actions/views
+
+Your plugin may choose to use the built-in collections actions for adding/removing/rearranging items. Since these are not aware of your business logic, you must specify permissions by handling the plugin hook "elggx_collections:can".
+
+Your handler always will be passed the collection as `$params['collection']`, and the logged in user as `$params['user']`.
 
 Available values for `$type`:
 
@@ -15,10 +70,22 @@ Available values for `$type`:
 * "delete_item" (includes `$params['item_guid']`)
 * "rearrange_items" (includes `$params['items_before']` and `$params['items_after']`)
 
-If the user should be allowed to alter the collection in the manner specified by `$type`, then your handler function should return `true`.
+If the user should be allowed to alter the collection (in the action specified by `$type`), then your handler function should return `true`.
 
+Also included are views `elggx_collections/output/(add|remove)_item_link` to write links to the above actions.
+
+### UI for rearranging items (TODO)
+
+JavaScript code to support the `rearrange_items` action (based on jQuery UI Sortable) has been copied from a working project, but must be refactored to function. It's located in views/default/js/elggx_collections.js
+
+I hope to offer a view that supports outputting a collection so that it can be reordered. The reordering mechanism should work across pagination boundaries, but obviously there's no way to drag items across pages, so it may be wise to always present the list on one page when it must be sorted.
+
+The backend reordering mechanism is designed to perform as few queries as possible, but this API will certainly have limitations.
 
 ### Setup
 
 Install this plugin as `path/to/Elgg/mod/elggx_collections_api`
 
+### Support
+
+Ask questions via https://groups.google.com/forum/#!forum/elgg-development or http://community.elgg.org/groups/profile/7/plugin-development

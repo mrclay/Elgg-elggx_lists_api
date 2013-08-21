@@ -49,7 +49,7 @@ define('elggx_collections', function (require) {
 
 				isAjaxWaiting = true;
 
-				elgg.action('collections/rearrange_items', {
+				elgg.action('elggx_collections/rearrange_items', {
 					data: data,
 					success: function () {
 						$save.hide();

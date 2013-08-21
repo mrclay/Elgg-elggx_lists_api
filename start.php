@@ -119,6 +119,13 @@ function _elggx_collections_test($hook, $type, $value, $params) {
  */
 function _elggx_collections_init() {
 	elgg_register_plugin_hook_handler('unit_test', 'system', '_elggx_collections_test');
+
+	foreach (array('add_item', 'remove_item', 'rearrange_items') as $action) {
+		elgg_register_action(
+			"elggx_collections/$action",
+			dirname(__FILE__) . "/actions/elggx_collections/$action.php"
+		);
+	}
 }
 
 elgg_register_event_handler('init', 'system', '_elggx_collections_init');

@@ -57,6 +57,8 @@ class Elggx_Collections_Collection {
 	 * @param string $name
 	 * @return string
 	 * @throws InvalidArgumentException
+	 *
+	 * @access private
 	 */
 	public static function createRelationshipKey($name) {
 		$key = self::RELATIONSHIP_PREFIX . $name;
@@ -83,6 +85,8 @@ class Elggx_Collections_Collection {
 
 	/**
 	 * @return string
+	 *
+	 * @access private
 	 */
 	public function getRelationshipKey() {
 		return $this->relationship_key;
