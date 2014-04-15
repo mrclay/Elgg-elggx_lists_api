@@ -5,22 +5,22 @@ if (!function_exists('elgg_get_version')) {
 }
 
 /**
- * Create an API for a named collection on an entity.
+ * Create an API for a named list on an entity.
  *
  * @param ElggEntity|int $entity
  * @param string         $name
  *
- * @return Elggx_Collections_Collection
+ * @return Elggx_Lists_List
  */
-function elggx_get_collection($entity, $name = '') {
+function elggx_get_list($entity, $name = '') {
 	if ($entity instanceof ElggEntity) {
 		$entity = $entity->guid;
 	}
-	return new Elggx_Collections_Collection($entity, $name);
+	return new Elggx_Lists_List($entity, $name);
 }
 
 /**
- * Get all collections containing an entity
+ * Get all lists containing an entity
  *
  * @param ElggEntity|int $entity
  * @param array $options Array in format:
@@ -31,16 +31,16 @@ function elggx_get_collection($entity, $name = '') {
  *
  * 	count => true|false return a count instead of entities
  *
- * @return Elggx_Collections_Collection[]|int
+ * @return Elggx_Lists_List[]|int
  */
-function elggx_get_containing_collections($entity, array $options = array()) {
+function elggx_get_containing_lists($entity, array $options = array()) {
 	if ($entity instanceof ElggEntity) {
 		$entity = $entity->guid;
 	}
 
 	$entity = (int)$entity;
 
-	$relationship_prefix = Elggx_Collections_Collection::RELATIONSHIP_PREFIX;
+	$relationship_prefix = Elggx_Lists_List::RELATIONSHIP_PREFIX;
 	$len_relationship_prefix = strlen($relationship_prefix);
 
 	$relationship_prefix_escaped = "'" . sanitize_string($relationship_prefix) .  "'";
@@ -76,12 +76,12 @@ function elggx_get_containing_collections($entity, array $options = array()) {
 	";
 
 	$sql = strtr($sql, array(
-		'{TABLE}' => elgg_get_config('dbprefix') . Elggx_Collections_Collection::TABLE_UNPREFIXED,
-		'{PRIORITY}' => Elggx_Collections_Collection::COL_PRIORITY,
-		'{ITEM}' => Elggx_Collections_Collection::COL_ITEM,
-		'{KEY}' => Elggx_Collections_Collection::COL_KEY,
-		'{TIME}' => Elggx_Collections_Collection::COL_TIME,
-		'{ENTITY_GUID}' => Elggx_Collections_Collection::COL_ENTITY_GUID,
+		'{TABLE}' => elgg_get_config('dbprefix') . Elggx_Lists_List::TABLE_UNPREFIXED,
+		'{PRIORITY}' => Elggx_Lists_List::COL_PRIORITY,
+		'{ITEM}' => Elggx_Lists_List::COL_ITEM,
+		'{KEY}' => Elggx_Lists_List::COL_KEY,
+		'{TIME}' => Elggx_Lists_List::COL_TIME,
+		'{ENTITY_GUID}' => Elggx_Lists_List::COL_ENTITY_GUID,
 	));
 
 	if ($options['count']) {
@@ -90,14 +90,14 @@ function elggx_get_containing_collections($entity, array $options = array()) {
 	} else {
 		$colls = array();
 		foreach ((array)get_data($sql) as $row) {
-			$colls[] = new Elggx_Collections_Collection($row->coll_entity_guid, $row->coll_name);
+			$colls[] = new Elggx_Lists_List($row->coll_entity_guid, $row->coll_name);
 		}
 		return $colls;
 	}
 }
 
 /**
- * Runs unit tests for collections and query modifiers
+ * Runs unit tests for lists and query modifiers
  *
  * @param string $hook   unit_test
  * @param string $type   system
@@ -107,8 +107,8 @@ function elggx_get_containing_collections($entity, array $options = array()) {
  * @return array
  * @access private
  */
-function _elggx_collections_test($hook, $type, $value, $params) {
-	$value[] = __DIR__ . '/tests/ElggxCollectionsTest.php';
+function _elggx_lists_test($hook, $type, $value, $params) {
+	$value[] = __DIR__ . '/tests/ElggxListsTest.php';
 	return $value;
 }
 
@@ -117,15 +117,15 @@ function _elggx_collections_test($hook, $type, $value, $params) {
  *
  * @access private
  */
-function _elggx_collections_init() {
-	elgg_register_plugin_hook_handler('unit_test', 'system', '_elggx_collections_test');
+function _elggx_lists_init() {
+	elgg_register_plugin_hook_handler('unit_test', 'system', '_elggx_lists_test');
 
 	foreach (array('add_item', 'remove_item', 'rearrange_items') as $action) {
 		elgg_register_action(
-			"elggx_collections/$action",
-			dirname(__FILE__) . "/actions/elggx_collections/$action.php"
+			"elggx_lists/$action",
+			dirname(__FILE__) . "/actions/elggx_lists/$action.php"
 		);
 	}
 }
 
-elgg_register_event_handler('init', 'system', '_elggx_collections_init');
+elgg_register_event_handler('init', 'system', '_elggx_lists_init');

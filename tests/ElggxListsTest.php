@@ -1,50 +1,36 @@
 <?php
 /**
- * Elgg Test collections API
+ * Elgg Test lists API
  *
  * @todo separate these tests out more
  *
  * @package Elgg
  * @subpackage Test
  */
-class ElggxCollectionsTest extends ElggCoreUnitTest {
-
-	/**
-	 * Called before each test method.
-	 */
-	public function setUp() {
-
-	}
-
-	/**
-	 * Called after each test method.
-	 */
-	public function tearDown() {
-
-	}
+class ElggxListsTest extends ElggCoreUnitTest {
 
 	/**
 	 * @todo split this up to test capabilities
 	 */
-	public function testGetCollectionHandlesEntitiesAndInts() {
+	public function testGetListHandlesEntitiesAndInts() {
 		$site = elgg_get_site_entity();
 
-		$coll = elggx_get_collection($site);
-		$this->assertIsA($coll, 'Elggx_Collections_Collection');
+		$coll = elggx_get_list($site);
+		$this->assertIsA($coll, 'Elggx_Lists_List');
 		$this->assertEqual($coll->getEntityGuid(), $site->guid);
 
-		$coll = elggx_get_collection($site->guid);
-		$this->assertIsA($coll, 'Elggx_Collections_Collection');
+		$coll = elggx_get_list($site->guid);
+		$this->assertIsA($coll, 'Elggx_Lists_List');
 		$this->assertEqual($coll->getEntityGuid(), $site->guid);
 	}
 
-	public function testEntityDeleteEmptiesCollections() {
+	public function testEntityDeleteEmptiesLists() {
 		$obj = new ElggObject();
 		$obj->save();
 
 		$name = 'testDeleteEmpties';
 
-		$coll = elggx_get_collection($obj, $name);
+		$coll = elggx_get_list($obj, $name);
 		$coll->push(elgg_get_site_entity());
 
 		$this->assertEqual($coll->count(), 1);
@@ -60,16 +46,16 @@ class ElggxCollectionsTest extends ElggCoreUnitTest {
 
 		$test_colls = array();
 		foreach (range(0, 9) as $i) {
-			$coll = elggx_get_collection($i, "testReverseLookups{$i}");
+			$coll = elggx_get_list($i, "testReverseLookups{$i}");
 			$coll->push($false_entity);
 			if ($i % 2 == 0) {
 				$coll->push($searched_entity);
 			}
 			$test_colls[] = $coll;
 		}
-		/* @var Elggx_Collections_Collection[] $test_colls */
+		/* @var Elggx_Lists_List[] $test_colls */
 
-		$count = elggx_get_containing_collections($searched_entity, array('count' => true));
+		$count = elggx_get_containing_lists($searched_entity, array('count' => true));
 		$this->assertEqual($count, 5);
 
 
@@ -77,18 +63,18 @@ class ElggxCollectionsTest extends ElggCoreUnitTest {
 		foreach (range(0, 9, 2) as $i) {
 			$expected["{$i}:testReverseLookups{$i}"] = true;
 		}
-		$found_colls = elggx_get_containing_collections($searched_entity);
+		$found_colls = elggx_get_containing_lists($searched_entity);
 		foreach ($found_colls as $coll) {
 			$key = $coll->getEntityGuid() . ":" . $coll->getName();
 			unset($expected[$key]);
 		}
 		$this->assertEqual(count($expected), 0);
 
-		$colls = elggx_get_containing_collections($searched_entity, array('limit' => 3, 'offset' => 0));
+		$colls = elggx_get_containing_lists($searched_entity, array('limit' => 3, 'offset' => 0));
 		$this->assertEqual(count($colls), 3);
-		$colls = elggx_get_containing_collections($searched_entity, array('limit' => 3, 'offset' => 3));
+		$colls = elggx_get_containing_lists($searched_entity, array('limit' => 3, 'offset' => 3));
 		$this->assertEqual(count($colls), 2);
-		$colls = elggx_get_containing_collections($searched_entity, array('limit' => 3, 'offset' => 6));
+		$colls = elggx_get_containing_lists($searched_entity, array('limit' => 3, 'offset' => 6));
 		$this->assertEqual(count($colls), 0);
 
 		foreach ($test_colls as $coll) {
@@ -101,8 +87,8 @@ class ElggxCollectionsTest extends ElggCoreUnitTest {
 	 */
 	public function testItemAccess() {
 		$user = elgg_get_logged_in_user_entity();
-		$name = 'test_collection';
-		$coll = elggx_get_collection($user, $name);
+		$name = 'test_list';
+		$coll = elggx_get_list($user, $name);
 
 		$this->assertEqual($coll->count(), 0);
 
@@ -192,7 +178,7 @@ class ElggxCollectionsTest extends ElggCoreUnitTest {
 
 			// Note: MySQL is non-deterministic when sorting by duplicate values.
 			// So if we use a bunch of test objects with the same time_created, we'll get
-			// different orders depending on if we JOIN with the collection table. To test
+			// different orders depending on if we JOIN with the list table. To test
 			// real world conditions, we use test objects with distinct time_created.
 			$obj->time_created = ($time + $i);
 			$obj->save();
@@ -204,7 +190,7 @@ class ElggxCollectionsTest extends ElggCoreUnitTest {
 
 		$user = elgg_get_logged_in_user_entity();
 		$name = 'testQueryModifier';
-		$coll = elggx_get_collection($user, $name);
+		$coll = elggx_get_list($user, $name);
 
 		$coll_guids = array($all_objs[2], $all_objs[4]);
 		$coll->push($coll_guids);
@@ -221,8 +207,8 @@ class ElggxCollectionsTest extends ElggCoreUnitTest {
 		$computed = $this->mapGuids($fetched_objs);
 		$this->assertEqual($expected, $computed);
 
-		// missing collection
-		$mod = new Elggx_Collections_QueryModifier(null);
+		// missing list
+		$mod = new Elggx_Lists_QueryModifier(null);
 		$fetched_objs = elgg_get_entities($mod->getOptions(array(
 			'type' => 'object',
 			'subtype' => 'testQueryModifier',
@@ -249,7 +235,7 @@ class ElggxCollectionsTest extends ElggCoreUnitTest {
 		$this->assertEqual($expected, $computed);
 
 		// missing for sticky
-		$mod = new Elggx_Collections_QueryModifier(null);
+		$mod = new Elggx_Lists_QueryModifier(null);
 		$mod->setModel('sticky');
 		$fetched_objs = elgg_get_entities($mod->getOptions(array(
 			'type' => 'object',
@@ -284,7 +270,7 @@ class ElggxCollectionsTest extends ElggCoreUnitTest {
 		$this->assertEqual($expected, $computed);
 
 		// missing for filter
-		$mod = new Elggx_Collections_QueryModifier(null);
+		$mod = new Elggx_Lists_QueryModifier(null);
 		$mod->setModel('filter');
 		$fetched_objs = elgg_get_entities($mod->getOptions(array(
 			'type' => 'object',

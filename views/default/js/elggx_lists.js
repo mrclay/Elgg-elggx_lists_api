@@ -1,19 +1,19 @@
 /**
- * @todo rewrite this for Elgg 1.8 and add generic view that supports viewing a collection add removing/reordering
+ * @todo rewrite this for Elgg 1.8 and add generic view that supports viewing a list add removing/reordering
  */
 
-define('elggx_collections', function (require) {
+define('elggx_lists', function (require) {
 	var elgg = require('elgg'),
 		$ = require('jquery');
 
 	$(function () {
 
-		// handle re-ordering and saving collection items
-		$('.xcollections-listing').each(function () {
+		// handle re-ordering and saving list items
+		$('.xlists-listing').each(function () {
 			var $listing = $(this),
 				coll = $listing.data('coll'),
-				$reorder = $('.xcollections-reorder[data-coll="' + coll + '"]'),
-				$save = $('.xcollections-reorder-save[data-coll="' + coll + '"]'),
+				$reorder = $('.xlists-reorder[data-coll="' + coll + '"]'),
+				$save = $('.xlists-reorder-save[data-coll="' + coll + '"]'),
 				isActive = false,
 				isAjaxWaiting = false,
 				isSortableReady = false,
@@ -38,18 +38,17 @@ define('elggx_collections', function (require) {
 				return [out1, out2];
 			}
 
-			// save re-ordered collection items (used below)
+			// save re-ordered list items (used below)
 			function save(changed) {
 				var data = {
-					coll_entity_guid: coll.split(',')[0],
-					coll_name: coll.split(',')[1],
+					list: coll,
 					guids_before: changed[0],
 					guids_after: changed[1]
 				};
 
 				isAjaxWaiting = true;
 
-				elgg.action('elggx_collections/rearrange_items', {
+				elgg.action('elggx_lists/rearrange_items', {
 					data: data,
 					success: function () {
 						$save.hide();
@@ -86,7 +85,7 @@ define('elggx_collections', function (require) {
 							$listing.sortable('enable');
 						} else {
 							sortableOpts = {
-								items: '> .xcollections-item',
+								items: '> .xlists-item',
 								opacity: 0.5
 							};
 							if (hasMasonry) {

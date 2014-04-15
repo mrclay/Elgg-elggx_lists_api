@@ -1,13 +1,13 @@
 <?php
 
 /**
- * A named and ordered collection of entities handy for modifying elgg_get_entities() queries.
+ * A named and ordered list of entities handy for modifying elgg_get_entities() queries.
  *
- * @note Use elggx_get_collection() to access collections
+ * @note Use elggx_get_list() to access lists
  *
  * @access private
  */
-class Elggx_Collections_Collection {
+class Elggx_Lists_List {
 
 	const TABLE_UNPREFIXED = 'entity_relationships';
 	const COL_PRIORITY = 'id';
@@ -15,7 +15,7 @@ class Elggx_Collections_Collection {
 	const COL_ENTITY_GUID = 'guid_two';
 	const COL_KEY = 'relationship';
 	const COL_TIME = 'time_created';
-	const RELATIONSHIP_PREFIX = 'coll:';
+	const RELATIONSHIP_PREFIX = 'list:';
 
 	/**
 	 * @var int
@@ -58,7 +58,7 @@ class Elggx_Collections_Collection {
 		$key = self::RELATIONSHIP_PREFIX . $name;
 		if (strlen($key) > 50) {
 			$max_length = 50 - strlen(self::RELATIONSHIP_PREFIX);
-			throw new InvalidArgumentException("Collection names cannot be longer than $max_length chars.");
+			throw new InvalidArgumentException("List names cannot be longer than $max_length chars.");
 		}
 		return $key;
 	}
@@ -87,7 +87,7 @@ class Elggx_Collections_Collection {
 	}
 
 	/**
-	 * Does the current user have permission to edit this collection using the built-in actions?
+	 * Does the current user have permission to edit this list using the built-in actions?
 	 *
 	 * @param string $capability  E.g. "add_item", "delete_item", "rearrange_items"
 	 * @param array  $hook_params Parameters passed to the permission hook
@@ -95,16 +95,16 @@ class Elggx_Collections_Collection {
 	 * @return bool
 	 */
 	public function can($capability, array $hook_params = array()) {
-		$hook_params['collection'] = $this;
+		$hook_params['list'] = $this;
 		$hook_params['user'] = elgg_get_logged_in_user_entity();
-		return (bool)elgg_trigger_plugin_hook('elggx_collections:can', $capability, $hook_params, false);
+		return (bool)elgg_trigger_plugin_hook('elggx_lists:can', $capability, $hook_params, false);
 	}
 
 	/**
-	 * Get a query modifier object to apply this collection to an elgg_get_entities call.
+	 * Get a query modifier object to apply this list to an elgg_get_entities call.
 	 *
 	 * <code>
-	 * $qm = elggx_get_collection($user, 'blog_sticky')->getQueryModifier('sticky');
+	 * $qm = elggx_get_list($user, 'blog_sticky')->getQueryModifier('sticky');
 	 *
 	 * elgg_list_entities($qm->getOptions(array(
 	 *     'type' => 'object',
@@ -115,10 +115,10 @@ class Elggx_Collections_Collection {
 	 *
 	 * @param string $model
 	 *
-	 * @return Elggx_Collections_QueryModifier
+	 * @return Elggx_Lists_QueryModifier
 	 */
 	public function getQueryModifier($model = '') {
-		$qm = new Elggx_Collections_QueryModifier($this);
+		$qm = new Elggx_Lists_QueryModifier($this);
 		if ($model) {
 			$qm->setModel($model);
 		}
@@ -126,7 +126,7 @@ class Elggx_Collections_Collection {
 	}
 
 	/**
-	 * Add item(s) to the end of the collection. Already existing items are not added/moved.
+	 * Add item(s) to the end of the list. Already existing items are not added/moved.
 	 *
 	 * @param array|int|ElggEntity $new_items
 	 *
@@ -146,7 +146,7 @@ class Elggx_Collections_Collection {
 		$new_items = array_diff($new_items, $existing_items);
 
 		foreach ($new_items as $i => $item) {
-			$new_items[$i] = new Elggx_Collections_Item($item);
+			$new_items[$i] = new Elggx_Lists_Item($item);
 		}
 		return $this->insertItems($new_items);
 	}
@@ -245,7 +245,7 @@ class Elggx_Collections_Collection {
 		// build new list of rows to be inserted later
 		$priorities = array_keys($items_moving);
 		$items_moving = array_values($items_moving);
-		/* @var Elggx_Collections_Item[] $items_moving */
+		/* @var Elggx_Lists_Item[] $items_moving */
 
 		// rearrange items, make priorities match old
 		$tmp = array_shift($items_moving);
@@ -293,7 +293,7 @@ class Elggx_Collections_Collection {
 		// build new list of rows to be inserted later
 		$priorities = array_keys($items_moving);
 		$items_moving = array_values($items_moving);
-		/* @var Elggx_Collections_Item[] $items_moving */
+		/* @var Elggx_Lists_Item[] $items_moving */
 
 		// rearrange items, make priorities match old
 		$tmp = array_pop($items_moving);
@@ -308,21 +308,21 @@ class Elggx_Collections_Collection {
 	}
 
 	/**
-	 * Remove all items from the collection
+	 * Remove all items from the list
 	 *
 	 * @return int|bool
 	 */
 	public function removeAll() {
 		return delete_data($this->preprocessSql("
 			DELETE FROM {TABLE}
-			WHERE {IN_COLLECTION}
+			WHERE {IN_LIST}
 		"));
 	}
 
 	/**
-	 * Remove item(s) from the collection
+	 * Remove item(s) from the list
 	 *
-	 * @param array|int|ElggEntity|Elggx_Collections_Item $items
+	 * @param array|int|ElggEntity|Elggx_Lists_Item $items
 	 *
 	 * @return int|bool
 	 */
@@ -333,7 +333,7 @@ class Elggx_Collections_Collection {
 		$items = $this->castPositiveInt($this->castArray($items));
 		return delete_data($this->preprocessSql("
 			DELETE FROM {TABLE}
-			WHERE {IN_COLLECTION} AND {ITEM} IN (" . implode(',', $items) . ")
+			WHERE {IN_LIST} AND {ITEM} IN (" . implode(',', $items) . ")
 		"));
 	}
 
@@ -360,9 +360,9 @@ class Elggx_Collections_Collection {
 	}
 
 	/**
-	 * Do any of the provided items appear in the collection?
+	 * Do any of the provided items appear in the list?
 	 *
-	 * @param array|int|ElggEntity|Elggx_Collections_Item $items
+	 * @param array|int|ElggEntity|Elggx_Lists_Item $items
 	 *
 	 * @return bool
 	 */
@@ -371,9 +371,9 @@ class Elggx_Collections_Collection {
 	}
 
 	/**
-	 * Do all of the provided items appear in the collection?
+	 * Do all of the provided items appear in the list?
 	 *
-	 * @param array|int|ElggEntity|Elggx_Collections_Item $items
+	 * @param array|int|ElggEntity|Elggx_Lists_Item $items
 	 *
 	 * @return bool
 	 */
@@ -385,21 +385,21 @@ class Elggx_Collections_Collection {
 	}
 
 	/**
-	 * Get the 0-indexed position of the item within the collection
+	 * Get the 0-indexed position of the item within the list
 	 *
 	 * @param int|ElggEntity $item
 	 *
-	 * @return bool|int 0-indexed position of item in collection or false if not found
+	 * @return bool|int 0-indexed position of item in list or false if not found
 	 */
 	public function indexOf($item) {
 		$item = $this->castPositiveInt($item);
 		$row = get_data_row($this->preprocessSql("
 			SELECT COUNT(*) AS cnt
 			FROM {TABLE}
-			WHERE {IN_COLLECTION}
+			WHERE {IN_LIST}
 			  AND {PRIORITY} <=
 				(SELECT {PRIORITY} FROM {TABLE}
-				WHERE {IN_COLLECTION} AND {ITEM} = $item
+				WHERE {IN_LIST} AND {ITEM} = $item
 				ORDER BY {PRIORITY}
 				LIMIT 1)
 			ORDER BY {PRIORITY}
@@ -408,7 +408,7 @@ class Elggx_Collections_Collection {
 	}
 
 	/**
-	 * Get a sequence of GUIDs from the collection using the semantics of array_slice
+	 * Get a sequence of GUIDs from the list using the semantics of array_slice
 	 *
 	 * @param int      $offset
 	 * @param int|null $length
@@ -447,7 +447,7 @@ class Elggx_Collections_Collection {
 				$rows = get_data($this->preprocessSql("
 					SELECT {ITEM} FROM (
 						SELECT {PRIORITY}, {ITEM} FROM {TABLE}
-						WHERE {IN_COLLECTION}
+						WHERE {IN_LIST}
 						ORDER BY {PRIORITY} DESC
 						LIMIT $sql_length, $mysql_no_limit
 					) AS q1
@@ -464,7 +464,7 @@ class Elggx_Collections_Collection {
 				$rows = get_data($this->preprocessSql("
 					SELECT {ITEM} FROM (
 						SELECT {PRIORITY}, {ITEM} FROM {TABLE}
-						WHERE {IN_COLLECTION}
+						WHERE {IN_LIST}
 						ORDER BY {PRIORITY} DESC
 						LIMIT $sql_offset
 					) AS q1
@@ -478,7 +478,7 @@ class Elggx_Collections_Collection {
 				$rows = get_data($this->preprocessSql("
 					SELECT {ITEM} FROM (
 						SELECT {PRIORITY}, {ITEM} FROM {TABLE}
-						WHERE {IN_COLLECTION}
+						WHERE {IN_LIST}
 						ORDER BY {PRIORITY} DESC
 						LIMIT $sql_offset
 					) AS q1
@@ -500,9 +500,9 @@ class Elggx_Collections_Collection {
 	}
 
 	/**
-	 * Insert Elggx_Collections_Item objects into the collection
+	 * Insert Elggx_Lists_Item objects into the list
 	 *
-	 * @param Elggx_Collections_Item[] $items
+	 * @param Elggx_Lists_Item[] $items
 	 *
 	 * @return bool
 	 */
@@ -539,12 +539,12 @@ class Elggx_Collections_Collection {
 	}
 
 	/**
-	 * Return only items that also appear in the collection (and in the order they
-	 * appear in the collection)
+	 * Return only items that also appear in the list (and in the order they
+	 * appear in the list)
 	 *
 	 * @param array|int|ElggEntity $items
 	 *
-	 * @return Elggx_Collections_Item[]
+	 * @return Elggx_Lists_Item[]
 	 *
 	 * @access private
 	 */
@@ -571,7 +571,7 @@ class Elggx_Collections_Collection {
 		$items = $this->castPositiveInt($this->castArray($items));
 		$rows = get_data($this->preprocessSql("
 			SELECT {PRIORITY}, {ITEM} FROM {TABLE}
-			WHERE {IN_COLLECTION} AND {ITEM} IN (" . implode(',', $items) . ")
+			WHERE {IN_LIST} AND {ITEM} IN (" . implode(',', $items) . ")
 		"));
 		if (!$is_array) {
 			return $rows ? $rows[0]->{self::COL_PRIORITY} : false;
@@ -586,7 +586,7 @@ class Elggx_Collections_Collection {
 	}
 
 	/**
-	 * Fetch Elggx_Collections_Item instances by query (or a count), with keys being the priorities
+	 * Fetch Elggx_Lists_Item instances by query (or a count), with keys being the priorities
 	 *
 	 * @param bool     $ascending
 	 * @param string   $where
@@ -594,7 +594,7 @@ class Elggx_Collections_Collection {
 	 * @param int|null $limit
 	 * @param bool     $count_only if true, return will be number of rows
 	 *
-	 * @return Elggx_Collections_Item[]|int|bool
+	 * @return Elggx_Lists_Item[]|int|bool
 	 *
 	 * @access private
 	 */
@@ -607,7 +607,7 @@ class Elggx_Collections_Collection {
 		// because MySQL doesn't support offset without limit: http://stackoverflow.com/a/271650/3779
 		$mysql_no_limit = "18446744073709551615";
 
-		$where_clause = "WHERE {IN_COLLECTION}";
+		$where_clause = "WHERE {IN_LIST}";
 		if (!empty($where)) {
 			$where_clause .= " AND ($where)";
 		}
@@ -644,7 +644,7 @@ class Elggx_Collections_Collection {
 		$items = array();
 		if ($rows) {
 			foreach ($rows as $row) {
-				$items[$row->{self::COL_PRIORITY}] = new Elggx_Collections_Item(
+				$items[$row->{self::COL_PRIORITY}] = new Elggx_Lists_Item(
 					$row->{self::COL_ITEM},
 					$row->{self::COL_PRIORITY},
 					$row->{self::COL_TIME}
@@ -677,12 +677,12 @@ class Elggx_Collections_Collection {
 		$items = $this->fetchItems($ascending, $where, $offset, $limit, $count_only);
 		if (is_array($items)) {
 			$new_items = array();
-			/* @var Elggx_Collections_Item[] $items */
+			/* @var Elggx_Lists_Item[] $items */
 			foreach ($items as $item) {
 				$new_items[] = $item->getValue();
 			}
 			$items = $new_items;
-		} elseif ($items instanceof Elggx_Collections_Item) {
+		} elseif ($items instanceof Elggx_Lists_Item) {
 			$items = $items->getValue();
 		}
 		return $items;
@@ -692,7 +692,7 @@ class Elggx_Collections_Collection {
 	 * Remove several from the beginning/end
 	 *
 	 * @param int  $num
-	 * @param bool $from_beginning remove from the beginning of the collection?
+	 * @param bool $from_beginning remove from the beginning of the list?
 	 *
 	 * @return int|bool num rows removed
 	 *
@@ -703,7 +703,7 @@ class Elggx_Collections_Collection {
 		$asc_desc = $from_beginning ? 'ASC' : 'DESC';
 		return delete_data($this->preprocessSql("
 			DELETE FROM {TABLE}
-			WHERE {IN_COLLECTION}
+			WHERE {IN_LIST}
 			ORDER BY {PRIORITY} $asc_desc
 			LIMIT $num
 		"));
@@ -729,7 +729,7 @@ class Elggx_Collections_Collection {
 				if (!is_numeric($v)) {
 					if ($v instanceof ElggEntity) {
 						$v = $v->getGUID();
-					} elseif ($v instanceof Elggx_Collections_Item) {
+					} elseif ($v instanceof Elggx_Lists_Item) {
 						$v = $v->getValue();
 					}
 				}
@@ -771,7 +771,7 @@ class Elggx_Collections_Collection {
 			'{KEY}' => self::COL_KEY,
 			'{TIME}' => self::COL_TIME,
 			'{ENTITY_GUID}' => self::COL_ENTITY_GUID,
-			'{IN_COLLECTION}' => "(" . self::COL_ENTITY_GUID . " = $this->entity_guid "
+			'{IN_LIST}' => "(" . self::COL_ENTITY_GUID . " = $this->entity_guid "
 			. "AND " . self::COL_KEY . " = '$this->relationship_key')",
 		));
 	}
@@ -809,7 +809,7 @@ class Elggx_Collections_Collection {
 		$priorities = $this->castPositiveInt((array)$priorities);
 		return delete_data($this->preprocessSql("
 			DELETE FROM {TABLE}
-			WHERE {IN_COLLECTION}
+			WHERE {IN_LIST}
 			  AND {PRIORITY} IN (" . implode(',', $priorities) . ")
 		"));
 	}*/
