@@ -78,7 +78,7 @@ class Elggx_Lists_QueryModifier implements Elggx_QueryModifierInterface {
 	/**
 	 * Get the next list items table alias
 	 *
-	 * @return int
+	 * @return string
 	 */
 	static public function getTableAlias() {
 		self::$counter++;

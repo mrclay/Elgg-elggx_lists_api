@@ -8,6 +8,8 @@
  * The rest of the $vars are passed to the output/url view.
  */
 
+/* @var array $vars */
+
 $list = $vars['list'];
 /* @var Elggx_Lists_List $list */
 

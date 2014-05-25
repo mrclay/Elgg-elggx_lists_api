@@ -51,10 +51,10 @@ function elggx_get_containing_lists($entity, array $options = array()) {
 		'count' => false,
 	), $options);
 
+	$limit_expression = "";
 	if ($options['count']) {
 		$select_values = "COUNT(*) AS cnt";
 		$order_by_expression = "";
-		$limit_expression = "";
 	} else {
 		$select_values = "SUBSTRING({KEY}, 1 + $len_relationship_prefix) AS coll_name, {ENTITY_GUID} AS coll_entity_guid";
 		$order_by_expression = "ORDER BY {TIME} DESC, {KEY}";

@@ -197,6 +197,7 @@ class Elggx_Lists_List {
 		// fetch and change position of moving items
 		$set = '(' . implode(',', array_keys($positions_by_value['old'])) . ')';
 		$items = $this->fetchItems(true, "{ITEM} IN $set");
+		/* @var Elggx_Lists_Item[] $items */
 
 		// make map from position to priority
 		$priority_by_position = array();
@@ -574,6 +575,7 @@ class Elggx_Lists_List {
 	protected function getPriorities($items) {
 		$is_array = is_array($items);
 		$items = $this->castPositiveInt($this->castArray($items));
+		/* @var int[] $items */
 		$rows = get_data($this->preprocessSql("
 			SELECT {PRIORITY}, {ITEM} FROM {TABLE}
 			WHERE {IN_LIST} AND {ITEM} IN (" . implode(',', $items) . ")
@@ -599,7 +601,7 @@ class Elggx_Lists_List {
 	 * @param int|null $limit
 	 * @param bool     $count_only if true, return will be number of rows
 	 *
-	 * @return Elggx_Lists_Item[]|int|bool
+	 * @return Elggx_Lists_Item[]|int
 	 *
 	 * @access private
 	 */
@@ -643,7 +645,7 @@ class Elggx_Lists_List {
 			$where_clause $order_by_clause $limit_clause
 		"));
 		if ($count_only) {
-			return isset($rows[0]->cnt) ? (int)$rows[0]->cnt : false;
+			return isset($rows[0]->cnt) ? (int)$rows[0]->cnt : 0;
 		}
 
 		$items = array();
