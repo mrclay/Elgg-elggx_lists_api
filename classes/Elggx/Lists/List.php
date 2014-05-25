@@ -142,6 +142,7 @@ class Elggx_Lists_List {
 			return true;
 		}
 		$new_items = $this->castPositiveInt($this->castArray($new_items));
+		/* @var int[] $new_items */
 
 		// remove existing from new list
 		$existing_items = $this->intersect($new_items);
@@ -246,7 +247,7 @@ class Elggx_Lists_List {
 	 *
 	 * @param int|ElggEntity $moving_item
 	 * @param int|ElggEntity $reference_item
-	 * @param string         $position
+	 * @param string         $position       Where to move to ("before" or "after" the reference)
 	 *
 	 * @return bool success
 	 * @throws InvalidArgumentException
@@ -329,6 +330,7 @@ class Elggx_Lists_List {
 			return true;
 		}
 		$items = $this->castPositiveInt($this->castArray($items));
+		/* @var int[] $items */
 		return delete_data($this->preprocessSql("
 			DELETE FROM {TABLE}
 			WHERE {IN_LIST} AND {ITEM} IN (" . implode(',', $items) . ")
@@ -551,6 +553,7 @@ class Elggx_Lists_List {
 			return array();
 		}
 		$items = $this->castPositiveInt($this->castArray($items));
+		/* @var int[] $items */
 		return $this->fetchItems(true, '{ITEM} IN (' . implode(',', $items) . ')');
 	}
 
@@ -602,55 +605,61 @@ class Elggx_Lists_List {
 								  $offset = 0,
 								  $limit = null,
 								  $count_only = false) {
-		// Note1: This is the largest supported value for MySQL's LIMIT (2^64-1) which must be used
-		// because MySQL doesn't support offset without limit: http://stackoverflow.com/a/271650/3779
-		$mysql_no_limit = "18446744073709551615";
-
 		$where_clause = "WHERE {IN_LIST}";
 		if (!empty($where)) {
 			$where_clause .= " AND ($where)";
 		}
 
-		$asc_desc = $ascending ? '' : 'DESC';
-		$order_by_clause = "ORDER BY {PRIORITY} $asc_desc";
+		$limit_clause = $this->getLimitClauseForFetch($limit, $offset);
 
-		if ($offset == 0 && $limit === null) {
-			$limit_clause = "";
-		} elseif ($offset == 0) {
-			$limit_clause = "LIMIT $limit";
-		} else {
-			// has offset
-			if ($limit === null) {
-				$limit_clause = "LIMIT $offset, $mysql_no_limit";
-			} else {
-				$limit_clause = "LIMIT $offset, $limit";
-			}
-		}
-
-		$columns = '{PRIORITY}, {ITEM}, {TIME}';
 		if ($count_only) {
 			$columns = 'COUNT(*) AS cnt';
-			$order_by_clause = '';
+			$rows = get_data($this->preprocessSql("
+				SELECT $columns FROM {TABLE}
+				$where_clause $limit_clause
+			"));
+			return isset($rows[0]->cnt) ? (int)$rows[0]->cnt : 0;
 		}
+
+		$order_by_clause = "ORDER BY {PRIORITY}" . ($ascending ? '' : ' DESC');
+		$columns = '{PRIORITY}, {ITEM}, {TIME}';
 		$rows = get_data($this->preprocessSql("
 			SELECT $columns FROM {TABLE}
 			$where_clause $order_by_clause $limit_clause
 		"));
-		if ($count_only) {
-			return isset($rows[0]->cnt) ? (int)$rows[0]->cnt : 0;
-		}
-
 		$items = array();
-		if ($rows) {
-			foreach ($rows as $row) {
-				$items[$row->{self::COL_PRIORITY}] = new Elggx_Lists_Item(
-					$row->{self::COL_ITEM},
-					$row->{self::COL_PRIORITY},
-					$row->{self::COL_TIME}
-				);
-			}
+		foreach ($rows as $row) {
+			$items[$row->{self::COL_PRIORITY}] = new Elggx_Lists_Item(
+				$row->{self::COL_ITEM},
+				$row->{self::COL_PRIORITY},
+				$row->{self::COL_TIME}
+			);
 		}
 		return $items;
+	}
+
+	/**
+	 * @param int|null $limit
+	 * @param int      $offset
+	 *
+	 * @return string
+	 */
+	protected function getLimitClauseForFetch($limit, $offset) {
+		if ($offset == 0 && $limit === null) {
+			return "";
+		}
+		if ($offset == 0) {
+			return "LIMIT $limit";
+		}
+		// has offset
+		if ($limit === null) {
+			// Note1: This is the largest supported value for MySQL's LIMIT (2^64-1) which must be used
+			// because MySQL doesn't support offset without limit: http://stackoverflow.com/a/271650/3779
+			$mysql_no_limit = "18446744073709551615";
+
+			return "LIMIT $offset, $mysql_no_limit";
+		}
+		return "LIMIT $offset, $limit";
 	}
 
 	/**
