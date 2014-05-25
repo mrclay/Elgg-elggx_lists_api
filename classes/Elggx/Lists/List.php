@@ -221,75 +221,61 @@ class Elggx_Lists_List {
 	 * Move an item to just after another item
 	 *
 	 * @param int|ElggEntity $moving_item
-	 * @param int|ElggEntity $after_item
+	 * @param int|ElggEntity $reference_item
 	 *
 	 * @return bool success
 	 */
-	public function moveAfter($moving_item, $after_item) {
-		$moving_item = $this->castPositiveInt($moving_item);
-		$after_item = $this->castPositiveInt($after_item);
-		if ($moving_item == $after_item) {
-			return true;
-		}
-
-		$priorities = $this->getPriorities(array($moving_item, $after_item));
-		if (count($priorities) < 2) {
-			return false;
-		}
-
-		// get full list of rows that must change
-		$where = "{PRIORITY} <= {$priorities[$after_item]} AND {PRIORITY} >= {$priorities[$moving_item]}";
-		$items_moving = $this->fetchItems(true, $where);
-		if (!$items_moving) {
-			// $item was probably below $before_item
-			return false;
-		}
-
-		// Since ID is a key column in relationships, we can't have duplicate keys. The sane way to change IDs
-		// is to delete the rows and reinsert them
-
-		// build new list of rows to be inserted later
-		$priorities = array_keys($items_moving);
-		$items_moving = array_values($items_moving);
-		/* @var Elggx_Lists_Item[] $items_moving */
-
-		// rearrange items, make priorities match old
-		$tmp = array_shift($items_moving);
-		array_push($items_moving, $tmp);
-		foreach ($items_moving as $i => $item) {
-			$item->setPriority($priorities[$i]);
-		}
-
-		// replace rows
-		$this->remove($items_moving);
-		return $this->insertItems($items_moving);
+	public function moveAfter($moving_item, $reference_item) {
+		return $this->move($moving_item, $reference_item, 'after');
 	}
 
 	/**
 	 * Move an item to just before another item
 	 *
 	 * @param int|ElggEntity $moving_item
-	 * @param int|ElggEntity $before_item
+	 * @param int|ElggEntity $reference_item
 	 *
 	 * @return bool success
 	 */
-	public function moveBefore($moving_item, $before_item) {
+	public function moveBefore($moving_item, $reference_item) {
+		return $this->move($moving_item, $reference_item, 'before');
+	}
+
+	/**
+	 * Move an item to just before or after another item
+	 *
+	 * @param int|ElggEntity $moving_item
+	 * @param int|ElggEntity $reference_item
+	 * @param string         $position
+	 *
+	 * @return bool success
+	 * @throws InvalidArgumentException
+	 */
+	protected function move($moving_item, $reference_item, $position) {
+		if ($position !== 'after' && $position !== 'before') {
+			throw new InvalidArgumentException('$position must be "before" or "after"');
+		}
+
 		$moving_item = $this->castPositiveInt($moving_item);
-		$before_item = $this->castPositiveInt($before_item);
-		if ($moving_item == $before_item) {
+		$reference_item = $this->castPositiveInt($reference_item);
+		if ($moving_item == $reference_item) {
 			return true;
 		}
 
-		$priorities = $this->getPriorities(array($moving_item, $before_item));
+		$priorities = $this->getPriorities(array($moving_item, $reference_item));
 		if (count($priorities) < 2) {
 			return false;
 		}
 
 		// get full list of rows that must change
-		$where = "{PRIORITY} >= {$priorities[$before_item]} AND {PRIORITY} <= {$priorities[$moving_item]}";
+		if ($position === 'before') {
+			$where = "{PRIORITY} >= {$priorities[$reference_item]} AND {PRIORITY} <= {$priorities[$moving_item]}";
+		} else {
+			$where = "{PRIORITY} <= {$priorities[$reference_item]} AND {PRIORITY} >= {$priorities[$moving_item]}";
+		}
 		$items_moving = $this->fetchItems(true, $where);
+		/* @var Elggx_Lists_Item[] $items_moving */
 		if (!$items_moving) {
-			// $item was probably above $before_item
 			return false;
 		}
 
@@ -302,8 +288,14 @@ class Elggx_Lists_List {
 		/* @var Elggx_Lists_Item[] $items_moving */
 
 		// rearrange items, make priorities match old
-		$tmp = array_pop($items_moving);
-		array_unshift($items_moving, $tmp);
+		if ($position === 'before') {
+			$tmp = array_pop($items_moving);
+			array_unshift($items_moving, $tmp);
+		} else {
+			$tmp = array_shift($items_moving);
+			array_push($items_moving, $tmp);
+		}
+
 		foreach ($items_moving as $i => $item) {
 			$item->setPriority($priorities[$i]);
 		}
