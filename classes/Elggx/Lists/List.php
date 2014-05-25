@@ -33,6 +33,11 @@ class Elggx_Lists_List {
 	protected $relationship_key;
 
 	/**
+	 * @var string
+	 */
+	protected $relationship_table;
+
+	/**
 	 * @param int    $entity_guid
 	 * @param string $name
 	 *
