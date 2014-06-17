@@ -92,9 +92,6 @@ class Elggx_Lists_QueryModifier implements Elggx_QueryModifierInterface {
 	 * @throws InvalidArgumentException
 	 */
 	public function setModel($model) {
-		if (!in_array($model, array('sticky', 'filter', 'selector'))) {
-			throw new InvalidArgumentException("Invalid model: $model");
-		}
 		switch ($model) {
 			case self::MODEL_FILTER:
 				$this->includeOthers = true;
@@ -111,6 +108,8 @@ class Elggx_Lists_QueryModifier implements Elggx_QueryModifierInterface {
 				$this->includeList = true;
 				$this->isReversed = true;
 				break;
+			default:
+				throw new InvalidArgumentException("Invalid model: $model");
 		}
 		return $this;
 	}
@@ -140,22 +139,22 @@ class Elggx_Lists_QueryModifier implements Elggx_QueryModifierInterface {
 			$options['order_by'] = self::DEFAULT_ORDER;
 		}
 
-		$table = elgg_get_config('dbprefix') . Elggx_Lists_List::TABLE_UNPREFIXED;
-		$col_item = Elggx_Lists_List::COL_ITEM;
-		$col_entity_guid = Elggx_Lists_List::COL_ENTITY_GUID;
-		$col_key = Elggx_Lists_List::COL_KEY;
-		$col_priority = Elggx_Lists_List::COL_PRIORITY;
+		$TABLE       = elgg_get_config('dbprefix') . Elggx_Lists_List::TABLE_UNPREFIXED;
+		$ITEM        = Elggx_Lists_List::COL_ITEM;
+		$ENTITY_GUID = Elggx_Lists_List::COL_ENTITY_GUID;
+		$KEY         = Elggx_Lists_List::COL_KEY;
+		$PRIORITY    = Elggx_Lists_List::COL_PRIORITY;
 
-		$join = "JOIN $table $tableAlias "
-			. "ON ({$this->join_column} = {$tableAlias}.{$col_item} "
-			. "    AND {$tableAlias}.{$col_entity_guid} = $guid "
-			. "    AND {$tableAlias}.{$col_key} = '$key') ";
+		$join = "JOIN $TABLE $tableAlias "
+			. "ON ({$this->join_column} = {$tableAlias}.{$ITEM} "
+			. "    AND {$tableAlias}.{$ENTITY_GUID} = $guid "
+			. "    AND {$tableAlias}.{$KEY} = '$key') ";
 		if ($this->includeOthers) {
 			$join = "LEFT {$join}";
 		}
 		$options['joins'][] = $join;
 		if ($this->includeList) {
-			$order = "{$tableAlias}.{$col_priority}";
+			$order = "{$tableAlias}.{$PRIORITY}";
 			if ($this->listItemsFirst != $this->isReversed) {
 				$order = "- $order";
 			}
@@ -164,7 +163,7 @@ class Elggx_Lists_QueryModifier implements Elggx_QueryModifierInterface {
 			}
 			$options['order_by'] = "{$order}, {$options['order_by']}";
 		} else {
-			$options['wheres'][] = "({$tableAlias}.{$col_item} IS NULL)";
+			$options['wheres'][] = "({$tableAlias}.{$ITEM} IS NULL)";
 		}
 		return $options;
 	}

@@ -774,52 +774,14 @@ class Elggx_Lists_List {
 	 */
 	protected function preprocessSql($sql) {
 		return strtr($sql, array(
-			'{TABLE}' => $this->relationship_table,
-			'{PRIORITY}' => self::COL_PRIORITY,
-			'{ITEM}' => self::COL_ITEM,
-			'{KEY}' => self::COL_KEY,
-			'{TIME}' => self::COL_TIME,
+			'{TABLE}'       => $this->relationship_table,
+			'{PRIORITY}'    => self::COL_PRIORITY,
+			'{ITEM}'        => self::COL_ITEM,
+			'{KEY}'         => self::COL_KEY,
+			'{TIME}'        => self::COL_TIME,
 			'{ENTITY_GUID}' => self::COL_ENTITY_GUID,
-			'{IN_LIST}' => "(" . self::COL_ENTITY_GUID . " = $this->entity_guid "
-			. "AND " . self::COL_KEY . " = '$this->relationship_key')",
+			'{IN_LIST}'     => "(" . self::COL_ENTITY_GUID . " = $this->entity_guid "
+			                   . "AND " . self::COL_KEY . " = '$this->relationship_key')",
 		));
 	}
-
-	/**
-	 * Get an item by index (can be negative!)
-	 *
-	 * @param int $index
-	 *
-	 * @return int|null
-	 *
-	 * @access private
-	 */
-	/*public function get($index) {
-		$item = $this->fetchItems(true, '', $index, 1);
-		return $item ? array_pop($item) : null;
-	}*/
-
-	/**
-	 * Remove items by priority
-	 *
-	 * @param array $priorities
-	 *
-	 * @return int|bool
-	 *
-	 * @access private
-	 */
-	/*public function removeByPriority($priorities) {
-		if (!$this->coll->canEdit()) {
-			return false;
-		}
-		if (!$priorities) {
-			return true;
-		}
-		$priorities = $this->castPositiveInt((array)$priorities);
-		return delete_data($this->preprocessSql("
-			DELETE FROM {TABLE}
-			WHERE {IN_LIST}
-			  AND {PRIORITY} IN (" . implode(',', $priorities) . ")
-		"));
-	}*/
 }
