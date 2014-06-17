@@ -62,9 +62,9 @@ Like relationships, lists have no inherent access control. If you need this, tie
 
 ### Using the built-in lists actions/views
 
-Your plugin may choose to use the built-in lists actions for adding/removing/rearranging items. Since these are not aware of your business logic, you must specify permissions by handling the plugin hook "elggx_lists:can".
+Your plugin may choose to use the built-in lists actions for adding/removing/rearranging items. This API comes with a default permissions handler that handles the hook "elggx_lists:can". Essentially, if the user can edit the list's entity, he/can use the actions.
 
-Your handler always will be passed the list as `$params['list']`, and the logged in user as `$params['user']`.
+When an action needs to determine if the user has permission, it triggers the hook "elggx_lists:can". Handlers always will be passed the list as `$params['list']`, and the logged in user as `$params['user']`.
 
 Available values for `$type`:
 
