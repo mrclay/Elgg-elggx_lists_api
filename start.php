@@ -99,6 +99,35 @@ function elggx_get_containing_lists($entity, array $options = array()) {
 /**
  * Runs unit tests for lists and query modifiers
  *
+ * @param string $hook       "elggx_lists:can"
+ * @param string $permission Type of permission
+ * @param mixed  $is_granted Hook value
+ * @param mixed  $params     Params
+ *
+ * @return bool|null
+ * @access private
+ */
+function _elggx_list_perms_handler($hook, $permission, $is_granted, $params) {
+	if ($is_granted || empty($params['user'])) {
+		return;
+	}
+	$user = $params['user'];
+	/* @var ElggUser $user */
+	$list = $params['list'];
+	/* @var Elggx_Lists_List $list */
+
+	$ia = elgg_set_ignore_access();
+	$entity = get_entity($list->getEntityGuid());
+	elgg_set_ignore_access($ia);
+
+	if ($entity && $entity->canEdit($user->guid)) {
+		return true;
+	}
+}
+
+/**
+ * Runs unit tests for lists and query modifiers
+ *
  * @param string $hook   unit_test
  * @param string $type   system
  * @param mixed  $value  Array of tests
@@ -118,6 +147,8 @@ function _elggx_lists_test($hook, $type, $value, $params) {
  * @access private
  */
 function _elggx_lists_init() {
+	elgg_register_plugin_hook_handler('elggx_lists:can', 'all', '_elggx_list_perms_handler');
+	
 	elgg_register_plugin_hook_handler('unit_test', 'system', '_elggx_lists_test');
 
 	foreach (array('add_item', 'remove_item', 'rearrange_items') as $action) {
