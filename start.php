@@ -97,7 +97,7 @@ function elggx_get_containing_lists($entity, array $options = array()) {
 }
 
 /**
- * Runs unit tests for lists and query modifiers
+ * Set default permissions for built-in actions
  *
  * @param string $hook       "elggx_lists:can"
  * @param string $permission Type of permission
