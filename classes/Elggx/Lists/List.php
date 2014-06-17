@@ -367,7 +367,7 @@ class Elggx_Lists_List {
 	 * @return bool
 	 */
 	public function hasAnyOf($items) {
-		return (bool)$this->intersect($items);
+		return $this->intersect($items, true) > 0;
 	}
 
 	/**
@@ -381,7 +381,7 @@ class Elggx_Lists_List {
 		if (!is_array($items)) {
 			return $this->hasAnyOf($items);
 		}
-		return count($this->intersect($items)) === count($items);
+		return $this->intersect($items, true) === count($items);
 	}
 
 	/**
@@ -543,18 +543,19 @@ class Elggx_Lists_List {
 	 * appear in the list)
 	 *
 	 * @param array|int|ElggEntity $items
+	 * @param bool                 $return_count
 	 *
 	 * @return Elggx_Lists_Item[]
 	 *
 	 * @access private
 	 */
-	protected function intersect($items) {
+	protected function intersect($items, $return_count = false) {
 		if (!$items) {
-			return array();
+			return $return_count ? 0 : array();
 		}
 		$items = $this->castPositiveInt($this->castArray($items));
 		/* @var int[] $items */
-		return $this->fetchItems(true, '{ITEM} IN (' . implode(',', $items) . ')');
+		return $this->fetchItems(true, '{ITEM} IN (' . implode(',', $items) . ')', 0, null, $return_count);
 	}
 
 	/**
@@ -594,7 +595,7 @@ class Elggx_Lists_List {
 	 * @param string   $where
 	 * @param int      $offset
 	 * @param int|null $limit
-	 * @param bool     $count_only if true, return will be number of rows
+	 * @param bool     $return_count if true, return will be number of rows
 	 *
 	 * @return Elggx_Lists_Item[]|int
 	 *
@@ -604,7 +605,7 @@ class Elggx_Lists_List {
 								  $where = '',
 								  $offset = 0,
 								  $limit = null,
-								  $count_only = false) {
+								  $return_count = false) {
 		$where_clause = "WHERE {IN_LIST}";
 		if (!empty($where)) {
 			$where_clause .= " AND ($where)";
@@ -612,7 +613,7 @@ class Elggx_Lists_List {
 
 		$limit_clause = $this->getLimitClauseForFetch($limit, $offset);
 
-		if ($count_only) {
+		if ($return_count) {
 			$columns = 'COUNT(*) AS cnt';
 			$rows = get_data($this->preprocessSql("
 				SELECT $columns FROM {TABLE}
