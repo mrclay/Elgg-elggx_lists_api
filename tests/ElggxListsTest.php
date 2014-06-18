@@ -179,7 +179,8 @@ class ElggxListsTest extends ElggCoreUnitTest {
 			// Note: MySQL is non-deterministic when sorting by duplicate values.
 			// So if we use a bunch of test objects with the same time_created, we'll get
 			// different orders depending on if we JOIN with the list table. To test
-			// real world conditions, we use test objects with distinct time_created.
+			// real world conditions (without forcing a custom sort), we use test objects
+			// with distinct time_created.
 			$obj->time_created = ($time + $i);
 			$obj->save();
 			$objs[] = $obj;
@@ -195,6 +196,7 @@ class ElggxListsTest extends ElggCoreUnitTest {
 		$list_guids = array($all_objs[2], $all_objs[4]);
 		$list->push($list_guids);
 
+
 		// selector
 		$mod = $list->getQueryModifier();
 		$fetched_objs = elgg_get_entities($mod->getOptions(array(
@@ -206,6 +208,7 @@ class ElggxListsTest extends ElggCoreUnitTest {
 
 		$computed = $this->mapGuids($fetched_objs);
 		$this->assertEqual($expected, $computed);
+
 
 		// missing list
 		$mod = new Elggx_Lists_QueryModifier(null);
@@ -250,6 +253,7 @@ class ElggxListsTest extends ElggCoreUnitTest {
 		$computed = $this->mapGuids($fetched_objs);
 		$this->assertEqual($expected, $computed);
 
+
 		// filter
 		$mod = $list->getQueryModifier('filter');
 		$fetched_objs = elgg_get_entities($mod->getOptions(array(
@@ -268,6 +272,7 @@ class ElggxListsTest extends ElggCoreUnitTest {
 		);
 		$computed = $this->mapGuids($fetched_objs);
 		$this->assertEqual($expected, $computed);
+
 
 		// missing for filter
 		$mod = new Elggx_Lists_QueryModifier(null);
@@ -290,8 +295,8 @@ class ElggxListsTest extends ElggCoreUnitTest {
 		$computed = $this->mapGuids($fetched_objs);
 		$this->assertEqual($expected, $computed);
 
+		// cleanup
 		$list->removeAll();
-
 		foreach ($objs as $obj) {
 			$obj->delete();
 		}

@@ -34,22 +34,22 @@ class Elggx_Lists_QueryModifier implements Elggx_QueryModifierInterface {
 	/**
 	 * @var bool should the result set include list items?
 	 */
-	public $includeList = true;
+	public $include_list = true;
 
 	/**
 	 * @var bool should the result set include non-list items?
 	 */
-	public $includeOthers = false;
+	public $include_others = false;
 
 	/**
 	 * @var bool should the list be used such that recent additions are on top?
 	 */
-	public $isReversed = true;
+	public $is_reversed = true;
 
 	/**
 	 * @var bool should all the list items appear at the top?
 	 */
-	public $listItemsFirst = true;
+	public $list_items_first = true;
 
 	/**
 	 * @param Elggx_Lists_List|null $list
@@ -94,19 +94,19 @@ class Elggx_Lists_QueryModifier implements Elggx_QueryModifierInterface {
 	public function setModel($model) {
 		switch ($model) {
 			case self::MODEL_FILTER:
-				$this->includeOthers = true;
-				$this->includeList = false;
+				$this->include_others = true;
+				$this->include_list = false;
 				break;
 			case self::MODEL_STICKY:
-				$this->includeOthers = true;
-				$this->includeList = true;
-				$this->listItemsFirst = true;
-				$this->isReversed = true;
+				$this->include_others = true;
+				$this->include_list = true;
+				$this->list_items_first = true;
+				$this->is_reversed = true;
 				break;
 			case self::MODEL_SELECTOR:
-				$this->includeOthers = false;
-				$this->includeList = true;
-				$this->isReversed = true;
+				$this->include_others = false;
+				$this->include_list = true;
+				$this->is_reversed = true;
 				break;
 			default:
 				throw new InvalidArgumentException("Invalid model: $model");
@@ -120,18 +120,20 @@ class Elggx_Lists_QueryModifier implements Elggx_QueryModifierInterface {
 	 * @return array
 	 */
 	public function getOptions(array $options = array()) {
-		if ($this->includeOthers) {
+		$table_alias = self::getTableAlias();
+		$this->last_alias = $table_alias;
+
+		if ($this->include_others) {
 			if (!$this->list) {
 				return $options;
 			}
 		} else {
-			if (!$this->includeList || !$this->list) {
+			if (!$this->include_list || !$this->list) {
 				// return none
 				$options['wheres'][] = "(1 = 2)";
 				return $options;
 			}
 		}
-		$tableAlias = self::getTableAlias();
 		$guid = $this->list->getEntityGuid();
 		$key = $this->list->getRelationshipKey();
 
@@ -145,25 +147,25 @@ class Elggx_Lists_QueryModifier implements Elggx_QueryModifierInterface {
 		$KEY         = Elggx_Lists_List::COL_KEY;
 		$PRIORITY    = Elggx_Lists_List::COL_PRIORITY;
 
-		$join = "JOIN $TABLE $tableAlias "
-			. "ON ({$this->join_column} = {$tableAlias}.{$ITEM} "
-			. "    AND {$tableAlias}.{$ENTITY_GUID} = $guid "
-			. "    AND {$tableAlias}.{$KEY} = '$key') ";
-		if ($this->includeOthers) {
+		$join = "JOIN $TABLE $table_alias "
+			. "ON ({$this->join_column} = {$table_alias}.{$ITEM} "
+			. "    AND {$table_alias}.{$ENTITY_GUID} = $guid "
+			. "    AND {$table_alias}.{$KEY} = '$key') ";
+		if ($this->include_others) {
 			$join = "LEFT {$join}";
 		}
 		$options['joins'][] = $join;
-		if ($this->includeList) {
-			$order = "{$tableAlias}.{$PRIORITY}";
-			if ($this->listItemsFirst != $this->isReversed) {
+		if ($this->include_list) {
+			$order = "{$table_alias}.{$PRIORITY}";
+			if ($this->list_items_first != $this->is_reversed) {
 				$order = "- $order";
 			}
-			if ($this->listItemsFirst) {
+			if ($this->list_items_first) {
 				$order .= " DESC";
 			}
 			$options['order_by'] = "{$order}, {$options['order_by']}";
 		} else {
-			$options['wheres'][] = "({$tableAlias}.{$ITEM} IS NULL)";
+			$options['wheres'][] = "({$table_alias}.{$ITEM} IS NULL)";
 		}
 		return $options;
 	}
