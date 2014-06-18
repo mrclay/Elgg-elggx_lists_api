@@ -50,6 +50,28 @@ $options = $qm->getOptions($options);
 elgg_list_entities($options);
 ```
 
+You can also efficiently detect whether or not returned entities are in your list:
+
+```php
+<?php
+
+$qm = $list->getQueryModifier('sticky');
+
+// tell the modifier to add a select column in the SQL query
+$qm->capture_list_presence = true;
+
+$options = $qm->getOptions($options);
+
+// after decorating options, get an anonymous function that knows how
+// detect presence in the list
+$detector = $qm->getPresenceDetector();
+
+$entities = elgg_get_entities($options);
+
+// true or false
+$detector($entities[0]);
+```
+
 ### Finding lists
 
 `elggx_get_containing_lists($entity, $options)` provides a way to find/count lists that contain a particular entity.
