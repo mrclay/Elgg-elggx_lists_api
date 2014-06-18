@@ -220,13 +220,16 @@ class ElggxListsTest extends ElggCoreUnitTest {
 		$computed = $this->mapGuids($fetched_objs);
 		$this->assertEqual($expected, $computed);
 
-		// sticky
+
+		// sticky (and test list presence)
 		$mod = $list->getQueryModifier('sticky');
+		$mod->capture_list_presence = true;
 		$fetched_objs = elgg_get_entities($mod->getOptions(array(
 			'type' => 'object',
 			'subtype' => 'testQueryModifier',
 			'limit' => 5,
 		)));
+		$detector = $mod->getPresenceDetector();
 		$expected = array(
 			$all_objs[4],
 			$all_objs[2],
@@ -236,6 +239,45 @@ class ElggxListsTest extends ElggCoreUnitTest {
 		);
 		$computed = $this->mapGuids($fetched_objs);
 		$this->assertEqual($expected, $computed);
+
+		// test detector on returned entities
+		$this->assertSame(true, $detector($fetched_objs[0]));
+		$this->assertSame(false, $detector($fetched_objs[2]));
+
+
+		// test detector on raw DB rows
+		$fetched_objs = elgg_get_entities($mod->getOptions(array(
+			'type' => 'object',
+			'subtype' => 'testQueryModifier',
+			'limit' => 5,
+			'callback' => '',
+		)));
+		$detector = $mod->getPresenceDetector();
+		$this->assertSame(true, $detector($fetched_objs[0]));
+		$this->assertSame(false, $detector($fetched_objs[2]));
+
+
+		// test detector with no list
+		$mod = new Elggx_Lists_QueryModifier(null);
+		$mod->setModel('sticky');
+		$mod->capture_list_presence = true;
+		$fetched_objs = elgg_get_entities($mod->getOptions(array(
+			'type' => 'object',
+			'subtype' => 'testQueryModifier',
+			'limit' => 3,
+		)));
+		$detector = $mod->getPresenceDetector();
+		$this->assertSame(false, $detector($fetched_objs[0]));
+
+		$fetched_objs = elgg_get_entities($mod->getOptions(array(
+			'type' => 'object',
+			'subtype' => 'testQueryModifier',
+			'limit' => 3,
+			'callback' => '',
+		)));
+		$detector = $mod->getPresenceDetector();
+		$this->assertSame(false, $detector($fetched_objs[0]));
+
 
 		// missing for sticky
 		$mod = new Elggx_Lists_QueryModifier(null);

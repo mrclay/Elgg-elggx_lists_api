@@ -27,6 +27,11 @@ class Elggx_Lists_QueryModifier implements Elggx_QueryModifierInterface {
 	protected $join_column = 'e.guid';
 
 	/**
+	 * @var string
+	 */
+	protected $last_alias = '';
+
+	/**
 	 * @var int
 	 */
 	static protected $counter = 0;
@@ -50,6 +55,13 @@ class Elggx_Lists_QueryModifier implements Elggx_QueryModifierInterface {
 	 * @var bool should all the list items appear at the top?
 	 */
 	public $list_items_first = true;
+
+	/**
+	 * @var bool if true, getOptions() will add a SELECT column to track whether the entity
+	 *           was in the list.
+	 * @see getPresenceDetector()
+	 */
+	public $capture_list_presence = false;
 
 	/**
 	 * @param Elggx_Lists_List|null $list
@@ -125,6 +137,9 @@ class Elggx_Lists_QueryModifier implements Elggx_QueryModifierInterface {
 
 		if ($this->include_others) {
 			if (!$this->list) {
+				if ($this->capture_list_presence) {
+					$options['selects'][] = "'' AS _in_list_$table_alias";
+				}
 				return $options;
 			}
 		} else {
@@ -167,6 +182,41 @@ class Elggx_Lists_QueryModifier implements Elggx_QueryModifierInterface {
 		} else {
 			$options['wheres'][] = "({$table_alias}.{$ITEM} IS NULL)";
 		}
+		if ($this->capture_list_presence) {
+			$options['selects'][] = "IF({$table_alias}.{$ITEM} IS NULL, '', '1') AS _in_list_$table_alias";
+		}
 		return $options;
+	}
+
+	/**
+	 * Get a function that can determine if an item returned by the last query was in the
+	 * list or not (boolean). If the function cannot determine list presence, it will return null.
+	 *
+	 * You must set capture_list_presence to true before calling getOptions()
+	 *
+	 * @see capture_list_presence
+	 *
+	 * @return Closure
+	 * @throws RuntimeException
+	 */
+	public function getPresenceDetector() {
+		if (!$this->last_alias) {
+			throw new RuntimeException('A presence detector is not available until getOptions() has been '
+				. 'called with the capture_list_presence property enabled.');
+		}
+		$last_alias = $this->last_alias;
+
+		return function ($item) use ($last_alias) {
+			if ($item instanceof ElggEntity) {
+				return (bool)$item->getVolatileData("select:_in_list_$last_alias");
+			}
+			if (is_object($item) && isset($item->{"_in_list_$last_alias"})) {
+				return (bool)$item->{"_in_list_$last_alias"};
+			}
+			if (is_array($item) && isset($item["_in_list_$last_alias"])) {
+				return (bool)$item["_in_list_$last_alias"];
+			}
+			return null;
+		};
 	}
 }
