@@ -112,4 +112,4 @@ Install this plugin as `mod/elggx_lists_api`
 
 ### Support
 
-Ask questions via https://groups.google.com/forum/#!forum/elgg-development or http://community.elgg.org/groups/profile/7/plugin-development
+Ask questions at http://community.elgg.org/groups/profile/7/plugin-development
